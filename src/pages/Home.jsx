@@ -5,9 +5,10 @@ import { useInView } from 'react-intersection-observer'
 import { 
   ArrowRight, ChevronDown, Download, Mail,
   Code2, Cpu, Bot, Cog, Cloud, Layers,
-  Github, Linkedin, ExternalLink
+  Github, Linkedin, ExternalLink, Smartphone
 } from 'lucide-react'
 import SkillsRadar from '../components/SkillsRadar'
+import CodeTag, { SectionTag } from '../components/CodeTag'
 import photoBen from '../assets/photo-ben.png'
 
 // Animation variants
@@ -87,12 +88,14 @@ const HeroSection = () => {
             className="text-center lg:text-left"
           >
             {/* Greeting */}
-            <motion.p 
+            <motion.div 
               variants={fadeInUp}
-              className="text-primary font-mono text-sm mb-4 tracking-wider"
+              className="mb-4"
             >
-              &lt;Hello World /&gt;
-            </motion.p>
+              <CodeTag language="python" size="sm">
+                Hello World
+              </CodeTag>
+            </motion.div>
 
             {/* Name */}
             <motion.h1 
@@ -211,25 +214,45 @@ const HeroSection = () => {
                 />
               </div>
               
-              {/* Floating badges */}
+              {/* Floating badges - 4 corners */}
               <motion.div
-                animate={{ y: [0, -10, 0] }}
+                animate={{ y: [0, -8, 0] }}
                 transition={{ duration: 3, repeat: Infinity }}
-                className="absolute -top-4 -right-4 px-4 py-2 rounded-lg glass
+                className="absolute -top-4 -right-4 px-3 py-1.5 rounded-lg glass
                            flex items-center space-x-2"
               >
-                <Bot className="text-primary" size={18} />
-                <span className="text-sm text-white font-medium">AI/ML</span>
+                <Bot className="text-primary" size={16} />
+                <span className="text-xs text-white font-medium">AI/ML</span>
+              </motion.div>
+              
+              <motion.div
+                animate={{ y: [0, 8, 0] }}
+                transition={{ duration: 3.5, repeat: Infinity }}
+                className="absolute -top-4 -left-4 px-3 py-1.5 rounded-lg glass
+                           flex items-center space-x-2"
+              >
+                <Smartphone className="text-green-400" size={16} />
+                <span className="text-xs text-white font-medium">Web/Mobile</span>
               </motion.div>
               
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 4, repeat: Infinity }}
-                className="absolute -bottom-4 -left-4 px-4 py-2 rounded-lg glass
+                className="absolute -bottom-4 -left-4 px-3 py-1.5 rounded-lg glass
                            flex items-center space-x-2"
               >
-                <Cog className="text-secondary" size={18} />
-                <span className="text-sm text-white font-medium">Robotics</span>
+                <Cog className="text-secondary" size={16} />
+                <span className="text-xs text-white font-medium">Robotics</span>
+              </motion.div>
+              
+              <motion.div
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 3.2, repeat: Infinity }}
+                className="absolute -bottom-4 -right-4 px-3 py-1.5 rounded-lg glass
+                           flex items-center space-x-2"
+              >
+                <Cloud className="text-cyan-400" size={16} />
+                <span className="text-xs text-white font-medium">Cloud</span>
               </motion.div>
             </div>
           </motion.div>
@@ -282,9 +305,9 @@ const SkillsPreview = () => {
         >
           {/* Text */}
           <div>
-            <motion.p variants={fadeInUp} className="section-tag mb-4">
-              Technical Expertise
-            </motion.p>
+            <motion.div variants={fadeInUp} className="mb-4">
+              <SectionTag>Technical Expertise</SectionTag>
+            </motion.div>
             <motion.h2 variants={fadeInUp} className="section-title mb-6">
               Full Stack <span className="text-gradient">Robotics</span> Engineer
             </motion.h2>
@@ -377,9 +400,9 @@ const FeaturedProjects = () => {
           variants={stagger}
           className="text-center mb-16"
         >
-          <motion.p variants={fadeInUp} className="section-tag mb-4">
-            Portfolio
-          </motion.p>
+          <motion.div variants={fadeInUp} className="mb-4">
+            <SectionTag>Portfolio</SectionTag>
+          </motion.div>
           <motion.h2 variants={fadeInUp} className="section-title mb-6">
             Featured <span className="text-gradient">Projects</span>
           </motion.h2>

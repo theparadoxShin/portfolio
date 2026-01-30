@@ -251,35 +251,6 @@ const transformSkillsToCategories = (apiSkills) => {
     }
   }).sort((a, b) => b.level - a.level)
 }
-    color: '#06B6D4',
-    level: 85,
-    description: 'Cloud infrastructure and deployment',
-    skills: [
-      { name: 'AWS (Certified)', level: 88 },
-      { name: 'Docker', level: 85 },
-      { name: 'Kubernetes', level: 72 },
-      { name: 'CI/CD', level: 82 },
-      { name: 'Terraform', level: 75 },
-      { name: 'GCP', level: 78 },
-    ]
-  },
-  {
-    key: 'embedded',
-    name: 'Embedded Systems',
-    icon: CircuitBoard,
-    color: '#6366F1',
-    level: 78,
-    description: 'Low-level programming and firmware',
-    skills: [
-      { name: 'C / C++', level: 82 },
-      { name: 'STM32', level: 78 },
-      { name: 'FreeRTOS', level: 75 },
-      { name: 'Raspberry Pi', level: 88 },
-      { name: 'ARM Assembly', level: 65 },
-      { name: 'Firmware Dev', level: 76 },
-    ]
-  }
-]
 
 // Hero Section
 const HeroSection = () => {

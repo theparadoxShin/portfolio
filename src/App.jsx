@@ -2,6 +2,7 @@ import { Routes, Route, useLocation } from 'react-router-dom'
 import { AnimatePresence } from 'framer-motion'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
+import Helena from './components/Helena'
 import Home from './pages/Home'
 import About from './pages/About'
 import Skills from './pages/Skills'
@@ -50,6 +51,9 @@ function App() {
         </main>
         <Footer />
       </div>
+      
+      {/* Helena AI Chatbot */}
+      <Helena />
     </div>
   )
 }
