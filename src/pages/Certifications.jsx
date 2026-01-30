@@ -1,91 +1,162 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useCertifications } from '../hooks/useApi';
+
+// Fallback certifications data
+const fallbackCertifications = [
+  {
+    _id: '1',
+    name: 'AWS Certified Cloud Practitioner',
+    issuer: 'Amazon Web Services',
+    issueDate: '2024-01-15',
+    credentialId: 'AWS-CCP-2024',
+    category: 'cloud',
+    level: 'foundational',
+    logo: '☁️',
+    color: '#FF9900',
+    description: 'Foundational understanding of AWS Cloud concepts, services, security, architecture, pricing, and support.',
+    skills: ['AWS Services', 'Cloud Architecture', 'Security', 'Cost Management'],
+    credentialUrl: 'https://aws.amazon.com/verification',
+    isPublished: true
+  },
+  {
+    _id: '2',
+    name: 'AWS Certified AI Practitioner',
+    issuer: 'Amazon Web Services',
+    issueDate: '2024-03-20',
+    credentialId: 'AWS-AIP-2024',
+    category: 'ai-ml',
+    level: 'foundational',
+    logo: '🤖',
+    color: '#FF9900',
+    description: 'Demonstrates knowledge of AI/ML concepts and how to apply them using AWS services.',
+    skills: ['Machine Learning', 'AI Services', 'Amazon Bedrock', 'SageMaker'],
+    credentialUrl: 'https://aws.amazon.com/verification',
+    isPublished: true
+  },
+  {
+    _id: '3',
+    name: 'Generative AI with LLMs',
+    issuer: 'DeepLearning.AI',
+    issueDate: '2024-02-10',
+    credentialId: 'DLAI-GENAI-2024',
+    category: 'ai-ml',
+    level: 'associate',
+    logo: '🧠',
+    color: '#00A3E0',
+    description: 'Advanced understanding of generative AI, large language models, and their applications.',
+    skills: ['LLMs', 'Prompt Engineering', 'Fine-tuning', 'RAG'],
+    credentialUrl: 'https://www.deeplearning.ai/verify',
+    isPublished: true
+  },
+  {
+    _id: '4',
+    name: 'AI Agents in LangGraph',
+    issuer: 'DeepLearning.AI',
+    issueDate: '2024-04-05',
+    credentialId: 'DLAI-LANGGRAPH-2024',
+    category: 'ai-ml',
+    level: 'associate',
+    logo: '⚡',
+    color: '#00A3E0',
+    description: 'Building and deploying AI agents using LangGraph framework for complex workflows.',
+    skills: ['LangGraph', 'AI Agents', 'Workflow Automation', 'LangChain'],
+    credentialUrl: 'https://www.deeplearning.ai/verify',
+    isPublished: true
+  },
+  {
+    _id: '5',
+    name: 'Multi AI Agent Systems with crewAI',
+    issuer: 'DeepLearning.AI',
+    issueDate: '2024-05-15',
+    credentialId: 'DLAI-CREWAI-2024',
+    category: 'ai-ml',
+    level: 'associate',
+    logo: '👥',
+    color: '#00A3E0',
+    description: 'Designing and implementing multi-agent AI systems for collaborative problem solving.',
+    skills: ['crewAI', 'Multi-Agent Systems', 'Orchestration', 'Agent Communication'],
+    credentialUrl: 'https://www.deeplearning.ai/verify',
+    isPublished: true
+  },
+  {
+    _id: '6',
+    name: 'Mechatronics Engineering Diploma',
+    issuer: 'Institut Universitaire de Technologie',
+    issueDate: '2019-07-01',
+    credentialId: 'IUT-MECA-2019',
+    category: 'other',
+    level: 'professional',
+    logo: '⚙️',
+    color: '#6B7280',
+    description: 'Comprehensive engineering degree covering mechanics, electronics, and computer science integration.',
+    skills: ['Robotics', 'Embedded Systems', 'CAD/CAM', 'Control Systems'],
+    credentialUrl: null,
+    isPublished: true
+  }
+];
+
+// Category mapping for filtering
+const categoryMapping = {
+  'all': 'all',
+  'cloud': 'cloud',
+  'ai': 'ai-ml',
+  'ai-ml': 'ai-ml',
+  'engineering': 'other',
+  'other': 'other'
+};
+
+// Helper functions
+const getCategoryEmoji = (category) => {
+  const emojiMap = {
+    'cloud': '☁️',
+    'ai-ml': '🤖',
+    'development': '💻',
+    'security': '🔒',
+    'data': '📊',
+    'devops': '⚙️',
+    'other': '📜'
+  };
+  return emojiMap[category] || '📜';
+};
+
+const getCategoryColor = (category) => {
+  const colorMap = {
+    'cloud': '#FF9900',
+    'ai-ml': '#00A3E0',
+    'development': '#3B82F6',
+    'security': '#EF4444',
+    'data': '#10B981',
+    'devops': '#8B5CF6',
+    'other': '#6B7280'
+  };
+  return colorMap[category] || '#6B7280';
+};
 
 const Certifications = () => {
   const [selectedCert, setSelectedCert] = useState(null);
   const [filter, setFilter] = useState('all');
-
-  // Static certifications data (will be replaced by API)
-  const certifications = [
-    {
-      id: 1,
-      name: 'AWS Certified Cloud Practitioner',
-      issuer: 'Amazon Web Services',
-      date: '2024',
-      credentialId: 'AWS-CCP-2024',
-      category: 'cloud',
-      logo: '☁️',
-      color: '#FF9900',
-      description: 'Foundational understanding of AWS Cloud concepts, services, security, architecture, pricing, and support.',
-      skills: ['AWS Services', 'Cloud Architecture', 'Security', 'Cost Management'],
-      verifyUrl: 'https://aws.amazon.com/verification'
-    },
-    {
-      id: 2,
-      name: 'AWS Certified AI Practitioner',
-      issuer: 'Amazon Web Services',
-      date: '2024',
-      credentialId: 'AWS-AIP-2024',
-      category: 'ai',
-      logo: '🤖',
-      color: '#FF9900',
-      description: 'Demonstrates knowledge of AI/ML concepts and how to apply them using AWS services.',
-      skills: ['Machine Learning', 'AI Services', 'Amazon Bedrock', 'SageMaker'],
-      verifyUrl: 'https://aws.amazon.com/verification'
-    },
-    {
-      id: 3,
-      name: 'Generative AI with LLMs',
-      issuer: 'DeepLearning.AI',
-      date: '2024',
-      credentialId: 'DLAI-GENAI-2024',
-      category: 'ai',
-      logo: '🧠',
-      color: '#00A3E0',
-      description: 'Advanced understanding of generative AI, large language models, and their applications.',
-      skills: ['LLMs', 'Prompt Engineering', 'Fine-tuning', 'RAG'],
-      verifyUrl: 'https://www.deeplearning.ai/verify'
-    },
-    {
-      id: 4,
-      name: 'AI Agents in LangGraph',
-      issuer: 'DeepLearning.AI',
-      date: '2024',
-      credentialId: 'DLAI-LANGGRAPH-2024',
-      category: 'ai',
-      logo: '⚡',
-      color: '#00A3E0',
-      description: 'Building and deploying AI agents using LangGraph framework for complex workflows.',
-      skills: ['LangGraph', 'AI Agents', 'Workflow Automation', 'LangChain'],
-      verifyUrl: 'https://www.deeplearning.ai/verify'
-    },
-    {
-      id: 5,
-      name: 'Multi AI Agent Systems with crewAI',
-      issuer: 'DeepLearning.AI',
-      date: '2024',
-      credentialId: 'DLAI-CREWAI-2024',
-      category: 'ai',
-      logo: '👥',
-      color: '#00A3E0',
-      description: 'Designing and implementing multi-agent AI systems for collaborative problem solving.',
-      skills: ['crewAI', 'Multi-Agent Systems', 'Orchestration', 'Agent Communication'],
-      verifyUrl: 'https://www.deeplearning.ai/verify'
-    },
-    {
-      id: 6,
-      name: 'Mechatronics Engineering Diploma',
-      issuer: 'Institut Universitaire de Technologie',
-      date: '2019',
-      credentialId: 'IUT-MECA-2019',
-      category: 'engineering',
-      logo: '⚙️',
-      color: '#6B7280',
-      description: 'Comprehensive engineering degree covering mechanics, electronics, and computer science integration.',
-      skills: ['Robotics', 'Embedded Systems', 'CAD/CAM', 'Control Systems'],
-      verifyUrl: null
+  const { certifications: apiCertifications, loading } = useCertifications();
+  
+  // Use API data if available, otherwise fallback
+  const certifications = useMemo(() => {
+    if (apiCertifications?.length > 0) {
+      // Map API data to display format
+      return apiCertifications.map(cert => ({
+        ...cert,
+        logo: cert.logo || getCategoryEmoji(cert.category),
+        color: cert.color || getCategoryColor(cert.category),
+        date: cert.issueDate ? new Date(cert.issueDate).getFullYear().toString() : 'N/A',
+        verifyUrl: cert.credentialUrl
+      }));
     }
-  ];
+    // Add computed fields to fallback data
+    return fallbackCertifications.map(cert => ({
+      ...cert,
+      date: cert.issueDate ? new Date(cert.issueDate).getFullYear().toString() : 'N/A',
+      verifyUrl: cert.credentialUrl
+    }));
+  }, [apiCertifications]);
 
   const categories = [
     { id: 'all', label: 'All', icon: '🎯' },
@@ -96,7 +167,10 @@ const Certifications = () => {
 
   const filteredCerts = filter === 'all' 
     ? certifications 
-    : certifications.filter(cert => cert.category === filter);
+    : certifications.filter(cert => {
+        const mappedFilter = categoryMapping[filter] || filter;
+        return cert.category === mappedFilter || cert.category === filter;
+      });
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -214,7 +288,7 @@ const Certifications = () => {
           <AnimatePresence mode="popLayout">
             {filteredCerts.map((cert) => (
               <motion.div
-                key={cert.id}
+                key={cert._id || cert.id}
                 variants={cardVariants}
                 layout
                 initial="hidden"

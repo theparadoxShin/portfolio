@@ -4,6 +4,7 @@ import {
   Briefcase, Calendar, MapPin, ExternalLink,
   ChevronRight, Building2
 } from 'lucide-react'
+import { useExperiences } from '../hooks/useApi'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
@@ -14,80 +15,104 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.1 } }
 }
 
-// Experience data
-const experiences = [
+// Fallback experience data
+const fallbackExperiences = [
   {
-    id: 1,
-    title: 'Founder & Lead Engineer',
+    _id: '1',
+    position: 'Founder & Lead Engineer',
     company: 'Daemon Craft Inc.',
-    location: 'Montreal, QC',
-    type: 'Full-time',
-    startDate: '2023-09',
+    location: { city: 'Montreal', country: 'Canada', remote: true },
+    type: 'full-time',
+    startDate: '2023-09-01',
     endDate: null,
-    current: true,
+    isCurrent: true,
     description: 'Founded and lead a technology company specializing in AI agents, IoT solutions, and intelligent software systems.',
+    responsibilities: [
+      'Architecting and developing AI agent systems',
+      'Designing IoT and embedded solutions',
+      'Leading project delivery and client relationships',
+      'Full-stack development of web and mobile applications'
+    ],
     achievements: [
-      'Developed AI-powered immigration assistance platform serving 500+ users',
-      'Built AR indoor navigation system for enterprise clients',
-      'Won multiple hackathons with innovative AI solutions',
-      'Established partnerships with technology providers'
+      { title: 'Developed AI-powered immigration assistance platform serving 500+ users' },
+      { title: 'Built AR indoor navigation system for enterprise clients' },
+      { title: 'Won multiple hackathons with innovative AI solutions' },
+      { title: 'Established partnerships with technology providers' }
     ],
     technologies: ['Python', 'React Native', 'AWS', 'OpenAI', 'FastAPI', 'IoT'],
     color: '#00D9FF'
   },
   {
-    id: 2,
-    title: 'Full Stack Developer',
+    _id: '2',
+    position: 'Full Stack Developer',
     company: 'Tech Solutions Co.',
-    location: 'Montreal, QC',
-    type: 'Contract',
-    startDate: '2022-06',
-    endDate: '2023-08',
-    current: false,
+    location: { city: 'Montreal', country: 'Canada', remote: false },
+    type: 'contract',
+    startDate: '2022-06-01',
+    endDate: '2023-08-31',
+    isCurrent: false,
     description: 'Developed web and mobile applications for various clients, focusing on scalable architecture and user experience.',
+    responsibilities: [
+      'Building e-commerce platforms',
+      'Implementing CI/CD pipelines',
+      'Cloud migration projects',
+      'Mentoring junior developers'
+    ],
     achievements: [
-      'Built e-commerce platform handling 10K+ daily transactions',
-      'Implemented CI/CD pipelines reducing deployment time by 60%',
-      'Led migration of legacy systems to cloud infrastructure',
-      'Mentored junior developers on best practices'
+      { title: 'Built e-commerce platform handling 10K+ daily transactions' },
+      { title: 'Implemented CI/CD pipelines reducing deployment time by 60%' },
+      { title: 'Led migration of legacy systems to cloud infrastructure' },
+      { title: 'Mentored junior developers on best practices' }
     ],
     technologies: ['React', 'Node.js', 'PostgreSQL', 'Docker', 'AWS'],
     color: '#8B5CF6'
   },
   {
-    id: 3,
-    title: 'Software Engineer',
+    _id: '3',
+    position: 'Software Engineer',
     company: 'StartupXYZ',
-    location: 'Cameroon (Remote)',
-    type: 'Full-time',
-    startDate: '2020-03',
-    endDate: '2022-05',
-    current: false,
+    location: { city: 'Douala', country: 'Cameroon', remote: true },
+    type: 'full-time',
+    startDate: '2020-03-01',
+    endDate: '2022-05-31',
+    isCurrent: false,
     description: 'Joined early-stage startup building IoT solutions for agriculture sector in Africa.',
+    responsibilities: [
+      'Designing IoT architecture',
+      'Developing mobile applications',
+      'Integrating sensor networks',
+      'Hardware cost optimization'
+    ],
     achievements: [
-      'Designed IoT architecture for smart farming system',
-      'Developed mobile app with 5K+ downloads',
-      'Integrated sensor networks for real-time monitoring',
-      'Reduced hardware costs by 40% through optimization'
+      { title: 'Designed IoT architecture for smart farming system' },
+      { title: 'Developed mobile app with 5K+ downloads' },
+      { title: 'Integrated sensor networks for real-time monitoring' },
+      { title: 'Reduced hardware costs by 40% through optimization' }
     ],
     technologies: ['React Native', 'ESP32', 'MQTT', 'Firebase', 'Python'],
     color: '#10B981'
   },
   {
-    id: 4,
-    title: 'Mechatronics Engineer',
+    _id: '4',
+    position: 'Mechatronics Engineer',
     company: 'Engineering Solutions Ltd.',
-    location: 'Cameroon',
-    type: 'Full-time',
-    startDate: '2018-09',
-    endDate: '2020-02',
-    current: false,
+    location: { city: 'Douala', country: 'Cameroon', remote: false },
+    type: 'full-time',
+    startDate: '2018-09-01',
+    endDate: '2020-02-28',
+    isCurrent: false,
     description: 'Applied mechatronics engineering skills to industrial automation and robotics projects.',
+    responsibilities: [
+      'Designing automated production lines',
+      'Programming PLC systems',
+      'Developing predictive maintenance algorithms',
+      'Creating technical documentation'
+    ],
     achievements: [
-      'Designed automated production line components',
-      'Programmed PLC systems for manufacturing',
-      'Developed predictive maintenance algorithms',
-      'Created technical documentation and training materials'
+      { title: 'Designed automated production line components' },
+      { title: 'Programmed PLC systems for manufacturing' },
+      { title: 'Developed predictive maintenance algorithms' },
+      { title: 'Created technical documentation and training materials' }
     ],
     technologies: ['PLC', 'MATLAB', 'SolidWorks', 'C++', 'AutoCAD'],
     color: '#F59E0B'
@@ -189,15 +214,15 @@ const ExperienceCard = ({ experience, index }) => {
         <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              {experience.current && (
+              {experience.isCurrent && (
                 <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 font-medium">
                   Current
                 </span>
               )}
-              <span className="text-gray-500 text-sm">{experience.type}</span>
+              <span className="text-gray-500 text-sm capitalize">{experience.type}</span>
             </div>
             <h3 className="font-heading text-2xl font-bold text-white mb-1">
-              {experience.title}
+              {experience.position}
             </h3>
             <div className="flex items-center text-primary font-medium">
               <Building2 size={16} className="mr-2" />
@@ -212,7 +237,8 @@ const ExperienceCard = ({ experience, index }) => {
             </div>
             <div className="flex items-center text-gray-500 text-sm">
               <MapPin size={14} className="mr-2" />
-              {experience.location}
+              {experience.location?.city}, {experience.location?.country}
+              {experience.location?.remote && ' (Remote)'}
             </div>
             <div className="text-primary text-sm mt-1 font-mono">
               {calculateDuration(experience.startDate, experience.endDate)}
@@ -232,13 +258,13 @@ const ExperienceCard = ({ experience, index }) => {
             Key Achievements
           </h4>
           <ul className="space-y-2">
-            {experience.achievements.map((achievement, idx) => (
+            {experience.achievements?.map((achievement, idx) => (
               <li key={idx} className="flex items-start text-gray-400 text-sm">
                 <span 
                   className="w-1.5 h-1.5 rounded-full mt-2 mr-3 flex-shrink-0"
                   style={{ backgroundColor: experience.color }}
                 />
-                {achievement}
+                {typeof achievement === 'object' ? achievement.title : achievement}
               </li>
             ))}
           </ul>
@@ -264,6 +290,10 @@ const ExperienceCard = ({ experience, index }) => {
 // Timeline Section
 const TimelineSection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
+  const { experiences: apiExperiences, loading } = useExperiences()
+  
+  // Use API data if available, otherwise fallback
+  const experiences = apiExperiences?.length > 0 ? apiExperiences : fallbackExperiences
 
   return (
     <section ref={ref} className="py-20">
@@ -272,11 +302,18 @@ const TimelineSection = () => {
           {/* Main timeline line */}
           <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-primary via-secondary to-accent hidden lg:block" />
 
+          {/* Loading state */}
+          {loading && (
+            <div className="text-center py-12">
+              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto" />
+            </div>
+          )}
+
           {/* Experience cards */}
           <div className="space-y-12">
             {experiences.map((experience, index) => (
               <ExperienceCard 
-                key={experience.id} 
+                key={experience._id || experience.id} 
                 experience={experience} 
                 index={index}
               />
@@ -291,6 +328,10 @@ const TimelineSection = () => {
 // Summary Stats
 const SummarySection = () => {
   const [ref, inView] = useInView({ threshold: 0.3, triggerOnce: true })
+  const { experiences: apiExperiences } = useExperiences()
+  
+  // Use API data if available, otherwise fallback
+  const experiences = apiExperiences?.length > 0 ? apiExperiences : fallbackExperiences
 
   const totalYears = experiences.reduce((acc, exp) => {
     const start = new Date(exp.startDate)

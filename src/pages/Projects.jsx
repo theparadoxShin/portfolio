@@ -5,6 +5,7 @@ import {
   ExternalLink, Github, Layers, Filter,
   Bot, Smartphone, Cpu, Cog, Globe, Code2
 } from 'lucide-react'
+import { useProjects } from '../hooks/useApi'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
@@ -15,111 +16,103 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.1 } }
 }
 
-// Project data
-const projects = [
+// Fallback project data (used when API is unavailable)
+const fallbackProjects = [
   {
-    id: 1,
+    _id: '1',
     title: 'SettleIn Canada',
     description: 'AI-powered mobile app helping immigrants navigate Canadian settlement with CV generation, budget tracking, and service discovery.',
-    longDescription: 'A comprehensive React Native application that combines AI assistance with practical tools for newcomers to Canada. Features include intelligent document analysis, multi-language support, and integration with local services.',
-    category: 'ai-agent',
-    tags: ['React Native', 'FastAPI', 'OpenAI', 'PostgreSQL', 'GCP'],
-    image: null,
-    color: 'from-blue-500 to-purple-600',
-    github: 'https://github.com/parfaittedomtedom/settledin',
-    demo: null,
-    featured: true
+    shortDescription: 'AI-powered immigrant settlement assistant',
+    category: 'mobile',
+    technologies: ['React Native', 'FastAPI', 'OpenAI', 'PostgreSQL', 'GCP'],
+    githubUrl: 'https://github.com/benparfait/settledin',
+    liveUrl: null,
+    featured: true,
+    status: 'in-progress'
   },
   {
-    id: 2,
+    _id: '2',
     title: 'AR Indoor Navigation',
     description: 'Augmented reality navigation system for complex indoor environments like airports, hospitals, and shopping centers.',
-    longDescription: 'B2B SaaS solution using ARKit/ARCore and computer vision for precise indoor positioning. Includes admin dashboard for venue management and real-time analytics.',
-    category: 'iot',
-    tags: ['Unity', 'ARKit', 'ARCore', 'Node.js', 'AWS'],
-    image: null,
-    color: 'from-green-500 to-teal-600',
-    github: null,
-    demo: 'https://ar-nav-demo.daemoncraft.ca',
-    featured: true
+    shortDescription: 'B2B AR navigation for enterprises',
+    category: 'mobile',
+    technologies: ['Unity', 'ARKit', 'ARCore', 'Node.js', 'AWS'],
+    githubUrl: null,
+    liveUrl: 'https://ar-nav-demo.daemoncraft.ca',
+    featured: true,
+    status: 'completed'
   },
   {
-    id: 3,
+    _id: '3',
     title: 'ImmiShield Agent',
     description: 'Financial document compliance analyzer for Canadian immigration using AI-powered document extraction.',
-    longDescription: 'Hackathon-winning project using LandingAI and AWS Bedrock for intelligent document processing. Analyzes bank statements, tax returns, and other financial documents for immigration compliance.',
+    shortDescription: 'AI document compliance for immigration',
     category: 'ai-agent',
-    tags: ['Python', 'AWS Bedrock', 'LandingAI', 'FastAPI'],
-    image: null,
-    color: 'from-orange-500 to-red-600',
-    github: 'https://github.com/parfaittedomtedom/immishield',
-    demo: null,
-    featured: true
+    technologies: ['Python', 'AWS Bedrock', 'LandingAI', 'FastAPI'],
+    githubUrl: 'https://github.com/benparfait/immishield',
+    liveUrl: null,
+    featured: true,
+    status: 'completed'
   },
   {
-    id: 4,
+    _id: '4',
     title: 'Autonomous Robot Platform',
     description: 'ROS-based mobile robot with SLAM capabilities and autonomous navigation for research applications.',
-    longDescription: 'Custom-built mobile robot platform using ROS2, featuring LiDAR-based SLAM, path planning, and obstacle avoidance. Designed for indoor mapping and navigation research.',
+    shortDescription: 'ROS2 robot for indoor navigation research',
     category: 'robotics',
-    tags: ['ROS2', 'Python', 'SLAM', 'LiDAR', 'Raspberry Pi'],
-    image: null,
-    color: 'from-red-500 to-orange-600',
-    github: 'https://github.com/parfaittedomtedom/ros-robot',
-    demo: null,
-    featured: false
+    technologies: ['ROS2', 'Python', 'SLAM', 'LiDAR', 'Raspberry Pi'],
+    githubUrl: 'https://github.com/benparfait/ros-robot',
+    liveUrl: null,
+    featured: false,
+    status: 'completed'
   },
   {
-    id: 5,
+    _id: '5',
     title: 'Smart Agriculture IoT',
     description: 'IoT system for precision agriculture with soil monitoring, automated irrigation, and crop health analytics.',
-    longDescription: 'Complete IoT solution using ESP32 sensors, MQTT messaging, and cloud analytics. Dashboard provides real-time monitoring and AI-powered recommendations for optimal crop yield.',
+    shortDescription: 'IoT precision agriculture system',
     category: 'iot',
-    tags: ['ESP32', 'MQTT', 'Node.js', 'React', 'AWS IoT'],
-    image: null,
-    color: 'from-green-600 to-emerald-500',
-    github: 'https://github.com/parfaittedomtedom/smart-agri',
-    demo: null,
-    featured: false
+    technologies: ['ESP32', 'MQTT', 'Node.js', 'React', 'AWS IoT'],
+    githubUrl: 'https://github.com/benparfait/smart-agri',
+    liveUrl: null,
+    featured: false,
+    status: 'completed'
   },
   {
-    id: 6,
+    _id: '6',
     title: 'AI Chatbot Framework',
     description: 'Customizable chatbot framework with multi-LLM support, RAG capabilities, and enterprise integrations.',
-    longDescription: 'Open-source chatbot framework supporting OpenAI, Claude, and local LLMs. Features include document ingestion, conversation memory, and webhook integrations.',
+    shortDescription: 'Open-source multi-LLM chatbot framework',
     category: 'chatbot',
-    tags: ['Python', 'LangChain', 'FastAPI', 'ChromaDB', 'React'],
-    image: null,
-    color: 'from-purple-500 to-pink-600',
-    github: 'https://github.com/parfaittedomtedom/chatbot-framework',
-    demo: null,
-    featured: false
+    technologies: ['Python', 'LangChain', 'FastAPI', 'ChromaDB', 'React'],
+    githubUrl: 'https://github.com/benparfait/chatbot-framework',
+    liveUrl: null,
+    featured: false,
+    status: 'completed'
   },
   {
-    id: 7,
+    _id: '7',
     title: 'E-Commerce Platform',
     description: 'Full-stack e-commerce solution with inventory management, payment processing, and analytics dashboard.',
-    longDescription: 'Complete e-commerce platform built with Next.js and Node.js. Features include Stripe integration, inventory management, order tracking, and comprehensive admin dashboard.',
+    shortDescription: 'Complete e-commerce with Stripe',
     category: 'web',
-    tags: ['Next.js', 'Node.js', 'PostgreSQL', 'Stripe', 'Tailwind'],
-    image: null,
-    color: 'from-cyan-500 to-blue-600',
-    github: null,
-    demo: 'https://ecommerce-demo.daemoncraft.ca',
-    featured: false
+    technologies: ['Next.js', 'Node.js', 'PostgreSQL', 'Stripe', 'Tailwind'],
+    githubUrl: null,
+    liveUrl: 'https://ecommerce-demo.daemoncraft.ca',
+    featured: false,
+    status: 'completed'
   },
   {
-    id: 8,
+    _id: '8',
     title: 'Fitness Tracker App',
     description: 'Cross-platform mobile app for workout tracking, meal planning, and health analytics.',
-    longDescription: 'React Native app with features including workout logging, custom exercise creation, meal tracking with barcode scanning, and progress visualization.',
+    shortDescription: 'Mobile fitness and health tracker',
     category: 'mobile',
-    tags: ['React Native', 'Expo', 'Firebase', 'Health APIs'],
-    image: null,
-    color: 'from-pink-500 to-rose-600',
-    github: 'https://github.com/parfaittedomtedom/fitness-app',
-    demo: null,
-    featured: false
+    technologies: ['React Native', 'Expo', 'Firebase', 'Health APIs'],
+    githubUrl: 'https://github.com/benparfait/fitness-app',
+    liveUrl: null,
+    featured: false,
+    status: 'completed'
   }
 ]
 
@@ -169,6 +162,17 @@ const HeroSection = () => {
 // Project Card
 const ProjectCard = ({ project, index }) => {
   const [isHovered, setIsHovered] = useState(false)
+  const colorMap = {
+    'ai-agent': 'from-orange-500 to-red-600',
+    'chatbot': 'from-purple-500 to-pink-600',
+    'iot': 'from-green-500 to-teal-600',
+    'robotics': 'from-red-500 to-orange-600',
+    'web': 'from-cyan-500 to-blue-600',
+    'mobile': 'from-blue-500 to-purple-600',
+    'embedded': 'from-yellow-500 to-orange-600',
+    'cad': 'from-pink-500 to-rose-600',
+  }
+  const color = colorMap[project.category] || 'from-gray-500 to-gray-600'
 
   return (
     <motion.div
@@ -182,7 +186,7 @@ const ProjectCard = ({ project, index }) => {
     >
       <div className="card h-full flex flex-col">
         {/* Image/Gradient Header */}
-        <div className={`relative h-48 rounded-lg mb-6 bg-gradient-to-br ${project.color} 
+        <div className={`relative h-48 rounded-lg mb-6 bg-gradient-to-br ${color} 
                         overflow-hidden`}>
           <div className="absolute inset-0 flex items-center justify-center">
             <Layers className="text-white/20" size={64} />
@@ -202,9 +206,9 @@ const ProjectCard = ({ project, index }) => {
             animate={{ opacity: isHovered ? 1 : 0 }}
             className="absolute inset-0 bg-dark/80 flex items-center justify-center gap-4"
           >
-            {project.github && (
+            {project.githubUrl && (
               <a
-                href={project.github}
+                href={project.githubUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center
@@ -213,9 +217,9 @@ const ProjectCard = ({ project, index }) => {
                 <Github size={20} />
               </a>
             )}
-            {project.demo && (
+            {project.liveUrl && (
               <a
-                href={project.demo}
+                href={project.liveUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center
@@ -234,12 +238,12 @@ const ProjectCard = ({ project, index }) => {
             {project.title}
           </h3>
           <p className="text-gray-400 text-sm mb-4 flex-1">
-            {project.description}
+            {project.shortDescription || project.description}
           </p>
 
           {/* Tags */}
           <div className="flex flex-wrap gap-2">
-            {project.tags.slice(0, 4).map((tag) => (
+            {(project.technologies || []).slice(0, 4).map((tag) => (
               <span 
                 key={tag}
                 className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary"
@@ -247,9 +251,9 @@ const ProjectCard = ({ project, index }) => {
                 {tag}
               </span>
             ))}
-            {project.tags.length > 4 && (
+            {(project.technologies || []).length > 4 && (
               <span className="px-2 py-1 text-xs rounded-full bg-white/5 text-gray-500">
-                +{project.tags.length - 4}
+                +{project.technologies.length - 4}
               </span>
             )}
           </div>
@@ -263,10 +267,28 @@ const ProjectCard = ({ project, index }) => {
 const ProjectsGridSection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
   const [activeCategory, setActiveCategory] = useState('all')
+  
+  // Fetch projects from API with fallback
+  const { projects: apiProjects, loading } = useProjects('portfolio')
+  const projects = apiProjects?.length > 0 ? apiProjects : fallbackProjects
 
   const filteredProjects = activeCategory === 'all' 
     ? projects 
     : projects.filter(p => p.category === activeCategory)
+
+  // Get available categories from projects
+  const availableCategories = ['all', ...new Set(projects.map(p => p.category))]
+  const displayCategories = categories.filter(c => availableCategories.includes(c.key))
+
+  if (loading) {
+    return (
+      <section className="py-20">
+        <div className="container-custom flex justify-center">
+          <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section ref={ref} className="py-20">
@@ -277,7 +299,7 @@ const ProjectsGridSection = () => {
           animate={inView ? { opacity: 1, y: 0 } : {}}
           className="flex flex-wrap justify-center gap-3 mb-12"
         >
-          {categories.map((category) => (
+          {displayCategories.map((category) => (
             <button
               key={category.key}
               onClick={() => setActiveCategory(category.key)}
@@ -301,7 +323,7 @@ const ProjectsGridSection = () => {
         >
           <AnimatePresence mode="popLayout">
             {filteredProjects.map((project, index) => (
-              <ProjectCard key={project.id} project={project} index={index} />
+              <ProjectCard key={project._id || project.id} project={project} index={index} />
             ))}
           </AnimatePresence>
         </motion.div>

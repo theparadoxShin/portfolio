@@ -1,28 +1,34 @@
 import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 
-// Skill categories with colors
+// Skill categories with colors - supports both 'ai' and 'ai-ml' keys
 const skillCategories = [
-  { key: 'frontend', label: 'Frontend', color: '#3B82F6' },
-  { key: 'backend', label: 'Backend', color: '#10B981' },
-  { key: 'ai', label: 'AI/ML', color: '#8B5CF6' },
-  { key: 'iot', label: 'IoT', color: '#F59E0B' },
-  { key: 'robotics', label: 'Robotics', color: '#EF4444' },
-  { key: 'cad', label: 'CAD', color: '#EC4899' },
-  { key: 'cloud', label: 'Cloud', color: '#06B6D4' },
-  { key: 'embedded', label: 'Embedded', color: '#6366F1' },
+  { key: 'frontend', altKey: 'frontend', label: 'Frontend', color: '#3B82F6' },
+  { key: 'backend', altKey: 'backend', label: 'Backend', color: '#10B981' },
+  { key: 'ai-ml', altKey: 'ai', label: 'AI/ML', color: '#8B5CF6' },
+  { key: 'iot', altKey: 'iot', label: 'IoT', color: '#F59E0B' },
+  { key: 'robotics', altKey: 'robotics', label: 'Robotics', color: '#EF4444' },
+  { key: 'cad', altKey: 'cad', label: 'CAD', color: '#EC4899' },
+  { key: 'cloud', altKey: 'cloud', label: 'Cloud', color: '#06B6D4' },
+  { key: 'embedded', altKey: 'embedded', label: 'Embedded', color: '#6366F1' },
 ]
 
 // Default skill values (0-100)
 const defaultSkills = {
   frontend: 85,
   backend: 90,
-  ai: 88,
+  'ai-ml': 88,
+  ai: 88, // fallback key
   iot: 82,
   robotics: 75,
   cad: 70,
   cloud: 85,
   embedded: 78,
+}
+
+// Helper to get skill value supporting both key formats
+const getSkillValue = (skills, category) => {
+  return skills[category.key] ?? skills[category.altKey] ?? 0
 }
 
 const SkillsRadar = ({ 
@@ -44,7 +50,7 @@ const SkillsRadar = ({
     const angleSlice = (Math.PI * 2) / numPoints
     
     return skillCategories.map((category, i) => {
-      const value = skills[category.key] || 0
+      const value = getSkillValue(skills, category)
       const normalizedValue = value / 100
       const angle = angleSlice * i - Math.PI / 2 // Start from top
       

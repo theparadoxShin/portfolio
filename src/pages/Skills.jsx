@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import { 
@@ -6,6 +6,7 @@ import {
   CheckCircle, Star
 } from 'lucide-react'
 import SkillsRadar from '../components/SkillsRadar'
+import { useSkills } from '../hooks/useApi'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
@@ -16,8 +17,72 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.1 } }
 }
 
-// Skill data
-const skillCategories = [
+// Category icon mapping
+const categoryIcons = {
+  frontend: Code2,
+  backend: Server,
+  'ai-ml': Brain,
+  iot: Cpu,
+  robotics: Cog,
+  cad: PenTool,
+  cloud: Cloud,
+  embedded: CircuitBoard,
+  database: Server,
+  devops: Cloud,
+  mobile: Code2,
+  other: Star
+}
+
+// Category color mapping
+const categoryColors = {
+  frontend: '#3B82F6',
+  backend: '#10B981',
+  'ai-ml': '#8B5CF6',
+  iot: '#F59E0B',
+  robotics: '#EF4444',
+  cad: '#EC4899',
+  cloud: '#06B6D4',
+  embedded: '#6366F1',
+  database: '#14B8A6',
+  devops: '#F97316',
+  mobile: '#8B5CF6',
+  other: '#6B7280'
+}
+
+// Category descriptions
+const categoryDescriptions = {
+  frontend: 'Building responsive and interactive user interfaces',
+  backend: 'Designing scalable server-side architectures',
+  'ai-ml': 'Building intelligent systems and AI agents',
+  iot: 'Connected devices and smart systems',
+  robotics: 'Autonomous systems and mechatronics',
+  cad: 'Mechanical design and 3D modeling',
+  cloud: 'Cloud infrastructure and deployment',
+  embedded: 'Low-level programming and firmware',
+  database: 'Database design and management',
+  devops: 'CI/CD and infrastructure automation',
+  mobile: 'Mobile application development',
+  other: 'Additional technical skills'
+}
+
+// Category display names
+const categoryNames = {
+  frontend: 'Frontend Development',
+  backend: 'Backend Development',
+  'ai-ml': 'AI & Machine Learning',
+  iot: 'IoT Systems',
+  robotics: 'Robotics',
+  cad: 'CAD & Design',
+  cloud: 'Cloud & DevOps',
+  embedded: 'Embedded Systems',
+  database: 'Databases',
+  devops: 'DevOps',
+  mobile: 'Mobile Development',
+  other: 'Other Skills'
+}
+
+// Fallback skill categories data
+const fallbackSkillCategories = [
   {
     key: 'frontend',
     name: 'Frontend Development',
@@ -51,7 +116,7 @@ const skillCategories = [
     ]
   },
   {
-    key: 'ai',
+    key: 'ai-ml',
     name: 'AI & Machine Learning',
     icon: Brain,
     color: '#8B5CF6',
@@ -148,6 +213,74 @@ const skillCategories = [
   }
 ]
 
+// Function to transform API skills to category format
+const transformSkillsToCategories = (apiSkills) => {
+  if (!apiSkills || apiSkills.length === 0) return fallbackSkillCategories
+  
+  // Group skills by category
+  const grouped = apiSkills.reduce((acc, skill) => {
+    const category = skill.category || 'other'
+    if (!acc[category]) {
+      acc[category] = []
+    }
+    acc[category].push(skill)
+    return acc
+  }, {})
+  
+  // Transform to category format
+  return Object.entries(grouped).map(([categoryKey, skills]) => {
+    // Find the main category skill (isRadarSkill) or calculate average
+    const mainSkill = skills.find(s => s.isRadarSkill)
+    const avgLevel = mainSkill?.level || Math.round(skills.reduce((sum, s) => sum + s.level, 0) / skills.length)
+    
+    return {
+      key: categoryKey,
+      name: categoryNames[categoryKey] || categoryKey,
+      icon: categoryIcons[categoryKey] || Star,
+      color: categoryColors[categoryKey] || '#6B7280',
+      level: avgLevel,
+      description: categoryDescriptions[categoryKey] || 'Technical skills',
+      skills: skills
+        .filter(s => !s.isRadarSkill)
+        .map(s => ({
+          name: s.name,
+          level: s.level,
+          ...s.subSkills && { subSkills: s.subSkills }
+        }))
+        .sort((a, b) => (b.level || 0) - (a.level || 0))
+    }
+  }).sort((a, b) => b.level - a.level)
+}
+    color: '#06B6D4',
+    level: 85,
+    description: 'Cloud infrastructure and deployment',
+    skills: [
+      { name: 'AWS (Certified)', level: 88 },
+      { name: 'Docker', level: 85 },
+      { name: 'Kubernetes', level: 72 },
+      { name: 'CI/CD', level: 82 },
+      { name: 'Terraform', level: 75 },
+      { name: 'GCP', level: 78 },
+    ]
+  },
+  {
+    key: 'embedded',
+    name: 'Embedded Systems',
+    icon: CircuitBoard,
+    color: '#6366F1',
+    level: 78,
+    description: 'Low-level programming and firmware',
+    skills: [
+      { name: 'C / C++', level: 82 },
+      { name: 'STM32', level: 78 },
+      { name: 'FreeRTOS', level: 75 },
+      { name: 'Raspberry Pi', level: 88 },
+      { name: 'ARM Assembly', level: 65 },
+      { name: 'Firmware Dev', level: 76 },
+    ]
+  }
+]
+
 // Hero Section
 const HeroSection = () => {
   return (
@@ -183,17 +316,31 @@ const HeroSection = () => {
 // Radar Section
 const RadarSection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
-
-  const skills = {
-    frontend: 85,
-    backend: 90,
-    ai: 88,
-    iot: 82,
-    robotics: 75,
-    cad: 70,
-    cloud: 85,
-    embedded: 78,
-  }
+  const { skills: apiSkills } = useSkills()
+  
+  // Build radar skills from API or use defaults
+  const radarSkills = useMemo(() => {
+    if (apiSkills?.length > 0) {
+      const radarItems = apiSkills.filter(s => s.isRadarSkill)
+      if (radarItems.length > 0) {
+        return radarItems.reduce((acc, skill) => {
+          acc[skill.category] = skill.level
+          return acc
+        }, {})
+      }
+    }
+    // Default radar skills
+    return {
+      frontend: 85,
+      backend: 90,
+      'ai-ml': 88,
+      iot: 82,
+      robotics: 75,
+      cad: 70,
+      cloud: 85,
+      embedded: 78,
+    }
+  }, [apiSkills])
 
   return (
     <section ref={ref} className="py-20">
@@ -204,7 +351,7 @@ const RadarSection = () => {
           transition={{ duration: 0.8 }}
           className="flex justify-center mb-8"
         >
-          <SkillsRadar skills={skills} size={450} animated={inView} />
+          <SkillsRadar skills={radarSkills} size={450} animated={inView} />
         </motion.div>
         
         <motion.p
@@ -331,7 +478,21 @@ const SkillsDetailPanel = ({ category }) => {
 // Skills Grid Section
 const SkillsGridSection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
-  const [selectedCategory, setSelectedCategory] = useState(skillCategories[0])
+  const { skills: apiSkills, loading } = useSkills()
+  
+  // Transform API skills to category format, or use fallback
+  const skillCategories = useMemo(() => {
+    return transformSkillsToCategories(apiSkills)
+  }, [apiSkills])
+  
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  
+  // Set default selected category once data is loaded
+  useMemo(() => {
+    if (skillCategories.length > 0 && !selectedCategory) {
+      setSelectedCategory(skillCategories[0])
+    }
+  }, [skillCategories, selectedCategory])
 
   return (
     <section ref={ref} className="py-20">
