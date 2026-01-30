@@ -1,5 +1,9 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Mail, Linkedin, Github, MapPin, Send, MessageSquare,
+  Bot, Cloud, Zap, Globe, CheckCircle2
+} from 'lucide-react';
 import { useContact } from '../hooks/useApi';
 
 const Contact = () => {
@@ -28,28 +32,28 @@ const Contact = () => {
 
   const contactInfo = [
     {
-      icon: '📧',
+      icon: Mail,
       label: 'Email',
       value: 'contact@parfaittedomtedom.com',
       href: 'mailto:contact@parfaittedomtedom.com',
       color: '#00D9FF'
     },
     {
-      icon: '💼',
+      icon: Linkedin,
       label: 'LinkedIn',
       value: 'Ben Parfait Tedomtedom',
       href: 'https://linkedin.com/in/parfaittedomtedom',
       color: '#0077B5'
     },
     {
-      icon: '🐙',
+      icon: Github,
       label: 'GitHub',
       value: '@parfaittedomtedom',
       href: 'https://github.com/parfaittedomtedom',
       color: '#8B5CF6'
     },
     {
-      icon: '📍',
+      icon: MapPin,
       label: 'Location',
       value: 'Montreal, QC, Canada',
       href: null,
@@ -81,7 +85,7 @@ const Contact = () => {
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-6"
           >
-            <span className="text-2xl">✉️</span>
+            <MessageSquare className="w-5 h-5 text-primary" />
             <span className="text-primary font-medium">Get In Touch</span>
           </motion.div>
           
@@ -123,10 +127,10 @@ const Contact = () => {
                         className="flex items-center gap-4 p-3 rounded-lg hover:bg-white/5 transition-colors group"
                       >
                         <span
-                          className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                          style={{ backgroundColor: `${item.color}20` }}
+                          className="w-12 h-12 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: `${item.color}20`, color: item.color }}
                         >
-                          {item.icon}
+                          <item.icon size={24} />
                         </span>
                         <div>
                           <p className="text-sm text-gray-500">{item.label}</p>
@@ -138,10 +142,10 @@ const Contact = () => {
                     ) : (
                       <div className="flex items-center gap-4 p-3">
                         <span
-                          className="w-12 h-12 rounded-lg flex items-center justify-center text-2xl"
-                          style={{ backgroundColor: `${item.color}20` }}
+                          className="w-12 h-12 rounded-lg flex items-center justify-center"
+                          style={{ backgroundColor: `${item.color}20`, color: item.color }}
                         >
-                          {item.icon}
+                          <item.icon size={24} />
                         </span>
                         <div>
                           <p className="text-sm text-gray-500">{item.label}</p>
@@ -222,7 +226,7 @@ const Contact = () => {
                       transition={{ type: 'spring', stiffness: 200, delay: 0.2 }}
                       className="w-20 h-20 rounded-full bg-green-500/20 flex items-center justify-center mx-auto mb-6"
                     >
-                      <span className="text-5xl">✅</span>
+                      <CheckCircle2 className="w-12 h-12 text-green-500" />
                     </motion.div>
                     <h4 className="text-2xl font-bold text-white mb-2">Message Sent!</h4>
                     <p className="text-gray-400 mb-6">
@@ -370,17 +374,17 @@ const Contact = () => {
         >
           <div className="glass-card p-8 md:p-12 text-center max-w-4xl mx-auto">
             <div className="flex justify-center gap-4 mb-6">
-              {['🇨🇦', '🤖', '☁️', '⚡'].map((emoji, i) => (
-                <motion.span
+              {[Globe, Bot, Cloud, Zap].map((Icon, i) => (
+                <motion.div
                   key={i}
                   initial={{ y: 20, opacity: 0 }}
                   whileInView={{ y: 0, opacity: 1 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="text-4xl"
+                  className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary"
                 >
-                  {emoji}
-                </motion.span>
+                  <Icon size={24} />
+                </motion.div>
               ))}
             </div>
             <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">

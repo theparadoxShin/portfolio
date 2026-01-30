@@ -1,6 +1,29 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Cloud, Bot, Brain, Zap, Users, Cog, Award, Shield,
+  Code2, Database, Server, Filter, ExternalLink, X, Trophy
+} from 'lucide-react';
 import { useCertifications } from '../hooks/useApi';
+
+// Icon component mapping
+const IconComponent = ({ name, size = 24, className = '' }) => {
+  const icons = {
+    cloud: Cloud,
+    bot: Bot,
+    brain: Brain,
+    zap: Zap,
+    users: Users,
+    cog: Cog,
+    award: Award,
+    shield: Shield,
+    code: Code2,
+    database: Database,
+    server: Server,
+  };
+  const Icon = icons[name] || Award;
+  return <Icon size={size} className={className} />;
+};
 
 // Fallback certifications data
 const fallbackCertifications = [
@@ -12,7 +35,7 @@ const fallbackCertifications = [
     credentialId: 'AWS-CCP-2024',
     category: 'cloud',
     level: 'foundational',
-    logo: '☁️',
+    icon: 'cloud',
     color: '#FF9900',
     description: 'Foundational understanding of AWS Cloud concepts, services, security, architecture, pricing, and support.',
     skills: ['AWS Services', 'Cloud Architecture', 'Security', 'Cost Management'],
@@ -27,7 +50,7 @@ const fallbackCertifications = [
     credentialId: 'AWS-AIP-2024',
     category: 'ai-ml',
     level: 'foundational',
-    logo: '🤖',
+    icon: 'bot',
     color: '#FF9900',
     description: 'Demonstrates knowledge of AI/ML concepts and how to apply them using AWS services.',
     skills: ['Machine Learning', 'AI Services', 'Amazon Bedrock', 'SageMaker'],
@@ -42,7 +65,7 @@ const fallbackCertifications = [
     credentialId: 'DLAI-GENAI-2024',
     category: 'ai-ml',
     level: 'associate',
-    logo: '🧠',
+    icon: 'brain',
     color: '#00A3E0',
     description: 'Advanced understanding of generative AI, large language models, and their applications.',
     skills: ['LLMs', 'Prompt Engineering', 'Fine-tuning', 'RAG'],
@@ -57,7 +80,7 @@ const fallbackCertifications = [
     credentialId: 'DLAI-LANGGRAPH-2024',
     category: 'ai-ml',
     level: 'associate',
-    logo: '⚡',
+    icon: 'zap',
     color: '#00A3E0',
     description: 'Building and deploying AI agents using LangGraph framework for complex workflows.',
     skills: ['LangGraph', 'AI Agents', 'Workflow Automation', 'LangChain'],
@@ -72,7 +95,7 @@ const fallbackCertifications = [
     credentialId: 'DLAI-CREWAI-2024',
     category: 'ai-ml',
     level: 'associate',
-    logo: '👥',
+    icon: 'users',
     color: '#00A3E0',
     description: 'Designing and implementing multi-agent AI systems for collaborative problem solving.',
     skills: ['crewAI', 'Multi-Agent Systems', 'Orchestration', 'Agent Communication'],
@@ -87,7 +110,7 @@ const fallbackCertifications = [
     credentialId: 'IUT-MECA-2019',
     category: 'other',
     level: 'professional',
-    logo: '⚙️',
+    icon: 'cog',
     color: '#6B7280',
     description: 'Comprehensive engineering degree covering mechanics, electronics, and computer science integration.',
     skills: ['Robotics', 'Embedded Systems', 'CAD/CAM', 'Control Systems'],
@@ -107,17 +130,17 @@ const categoryMapping = {
 };
 
 // Helper functions
-const getCategoryEmoji = (category) => {
-  const emojiMap = {
-    'cloud': '☁️',
-    'ai-ml': '🤖',
-    'development': '💻',
-    'security': '🔒',
-    'data': '📊',
-    'devops': '⚙️',
-    'other': '📜'
+const getCategoryIcon = (category) => {
+  const iconMap = {
+    'cloud': 'cloud',
+    'ai-ml': 'bot',
+    'development': 'code',
+    'security': 'shield',
+    'data': 'database',
+    'devops': 'server',
+    'other': 'award'
   };
-  return emojiMap[category] || '📜';
+  return iconMap[category] || 'award';
 };
 
 const getCategoryColor = (category) => {
@@ -144,7 +167,7 @@ const Certifications = () => {
       // Map API data to display format
       return apiCertifications.map(cert => ({
         ...cert,
-        logo: cert.logo || getCategoryEmoji(cert.category),
+        icon: cert.icon || getCategoryIcon(cert.category),
         color: cert.color || getCategoryColor(cert.category),
         date: cert.issueDate ? new Date(cert.issueDate).getFullYear().toString() : 'N/A',
         verifyUrl: cert.credentialUrl
@@ -159,11 +182,18 @@ const Certifications = () => {
   }, [apiCertifications]);
 
   const categories = [
-    { id: 'all', label: 'All', icon: '🎯' },
-    { id: 'cloud', label: 'Cloud', icon: '☁️' },
-    { id: 'ai', label: 'AI/ML', icon: '🤖' },
-    { id: 'engineering', label: 'Engineering', icon: '⚙️' }
+    { id: 'all', label: 'All', iconName: 'filter' },
+    { id: 'cloud', label: 'Cloud', iconName: 'cloud' },
+    { id: 'ai', label: 'AI/ML', iconName: 'bot' },
+    { id: 'engineering', label: 'Engineering', iconName: 'cog' }
   ];
+
+  // Category icons mapping
+  const CategoryIcon = ({ name }) => {
+    const icons = { filter: Filter, cloud: Cloud, bot: Bot, cog: Cog };
+    const Icon = icons[name] || Filter;
+    return <Icon size={16} />;
+  };
 
   const filteredCerts = filter === 'all' 
     ? certifications 
@@ -211,7 +241,7 @@ const Certifications = () => {
             transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
             className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-6"
           >
-            <span className="text-2xl">🏆</span>
+            <Trophy className="w-5 h-5 text-primary" />
             <span className="text-primary font-medium">Certifications & Credentials</span>
           </motion.div>
           
@@ -234,10 +264,10 @@ const Certifications = () => {
           className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12"
         >
           {[
-            { value: certifications.length, label: 'Certifications', icon: '📜' },
-            { value: certifications.filter(c => c.category === 'ai').length, label: 'AI/ML Certs', icon: '🤖' },
-            { value: certifications.filter(c => c.category === 'cloud').length, label: 'Cloud Certs', icon: '☁️' },
-            { value: '2024', label: 'Latest Year', icon: '📅' }
+            { value: certifications.length, label: 'Certifications', iconName: 'award' },
+            { value: certifications.filter(c => c.category === 'ai-ml').length, label: 'AI/ML Certs', iconName: 'bot' },
+            { value: certifications.filter(c => c.category === 'cloud').length, label: 'Cloud Certs', iconName: 'cloud' },
+            { value: '2024', label: 'Latest Year', iconName: 'zap' }
           ].map((stat, index) => (
             <motion.div
               key={stat.label}
@@ -246,7 +276,9 @@ const Certifications = () => {
               transition={{ delay: 0.4 + index * 0.1 }}
               className="glass-card p-4 text-center"
             >
-              <span className="text-2xl mb-2 block">{stat.icon}</span>
+              <div className="text-primary mb-2 flex justify-center">
+                <IconComponent name={stat.iconName} size={28} />
+              </div>
               <div className="text-2xl md:text-3xl font-bold gradient-text">{stat.value}</div>
               <div className="text-sm text-gray-400">{stat.label}</div>
             </motion.div>
@@ -272,7 +304,7 @@ const Certifications = () => {
                   : 'glass-card text-gray-300 hover:text-white hover:border-primary/50'
               }`}
             >
-              <span>{cat.icon}</span>
+              <CategoryIcon name={cat.iconName} />
               <span>{cat.label}</span>
             </motion.button>
           ))}
@@ -301,10 +333,10 @@ const Certifications = () => {
                 <div className="flex items-start justify-between mb-4">
                   <motion.div
                     whileHover={{ rotate: 10, scale: 1.1 }}
-                    className="w-14 h-14 rounded-xl flex items-center justify-center text-3xl"
-                    style={{ backgroundColor: `${cert.color}20` }}
+                    className="w-14 h-14 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: `${cert.color}20`, color: cert.color }}
                   >
-                    {cert.logo}
+                    <IconComponent name={cert.icon} size={28} />
                   </motion.div>
                   <span 
                     className="px-3 py-1 rounded-full text-xs font-medium"
@@ -375,18 +407,16 @@ const Certifications = () => {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.2, type: 'spring' }}
-                    className="w-20 h-20 rounded-2xl flex items-center justify-center text-5xl"
-                    style={{ backgroundColor: `${selectedCert.color}20` }}
+                    className="w-20 h-20 rounded-2xl flex items-center justify-center"
+                    style={{ backgroundColor: `${selectedCert.color}20`, color: selectedCert.color }}
                   >
-                    {selectedCert.logo}
+                    <IconComponent name={selectedCert.icon} size={40} />
                   </motion.div>
                   <button
                     onClick={() => setSelectedCert(null)}
                     className="p-2 rounded-lg hover:bg-white/10 transition-colors"
                   >
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+                    <X size={24} />
                   </button>
                 </div>
 
