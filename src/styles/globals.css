@@ -1,0 +1,469 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ============================================
+   BASE STYLES
+   ============================================ */
+:root {
+  --primary: #00D9FF;
+  --primary-light: #5CEFFF;
+  --primary-dark: #00A8CC;
+  --secondary: #8B5CF6;
+  --accent: #10B981;
+  --dark: #0A0F1C;
+  --dark-light: #111827;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: var(--dark);
+  color: #f3f4f6;
+  overflow-x: hidden;
+  line-height: 1.6;
+}
+
+/* ============================================
+   CUSTOM SCROLLBAR
+   ============================================ */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--dark);
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary-dark) 0%, var(--secondary) 100%);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+/* ============================================
+   SELECTION STYLES
+   ============================================ */
+::selection {
+  background: var(--primary);
+  color: var(--dark);
+}
+
+/* ============================================
+   TEXT GRADIENTS
+   ============================================ */
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary via-secondary to-accent;
+  }
+
+  .text-gradient-blue {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-blue-500;
+  }
+
+  .text-gradient-purple {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-secondary to-pink-500;
+  }
+
+  .text-gradient-animated {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(90deg, var(--primary), var(--secondary), var(--accent), var(--primary));
+    background-size: 300% 100%;
+    animation: gradient 5s ease infinite;
+  }
+}
+
+/* ============================================
+   GLOW EFFECTS
+   ============================================ */
+@layer utilities {
+  .glow {
+    box-shadow: 0 0 20px rgba(0, 217, 255, 0.3), 0 0 40px rgba(0, 217, 255, 0.1);
+  }
+
+  .glow-hover {
+    transition: box-shadow 0.3s ease;
+  }
+
+  .glow-hover:hover {
+    box-shadow: 0 0 30px rgba(0, 217, 255, 0.4), 0 0 60px rgba(0, 217, 255, 0.2);
+  }
+
+  .text-glow {
+    text-shadow: 0 0 10px rgba(0, 217, 255, 0.5), 0 0 20px rgba(0, 217, 255, 0.3);
+  }
+}
+
+/* ============================================
+   GLASS MORPHISM
+   ============================================ */
+@layer components {
+  .glass {
+    @apply bg-dark-light/60 backdrop-blur-xl border border-white/10;
+  }
+
+  .glass-hover {
+    @apply transition-all duration-300;
+  }
+
+  .glass-hover:hover {
+    @apply bg-dark-light/80 border-primary/30;
+  }
+}
+
+/* ============================================
+   GRID BACKGROUND
+   ============================================ */
+.grid-bg {
+  background-image: 
+    linear-gradient(rgba(0, 217, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 217, 255, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+}
+
+.grid-bg-dense {
+  background-image: 
+    linear-gradient(rgba(0, 217, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 217, 255, 0.05) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+@layer components {
+  .btn-primary {
+    @apply relative inline-flex items-center justify-center px-8 py-3
+           font-heading font-semibold text-dark bg-gradient-to-r from-primary to-primary-light
+           rounded-lg overflow-hidden transition-all duration-300
+           hover:shadow-glow-lg hover:scale-105 active:scale-95;
+  }
+
+  .btn-primary::before {
+    content: '';
+    @apply absolute inset-0 bg-gradient-to-r from-primary-light to-primary
+           opacity-0 transition-opacity duration-300;
+  }
+
+  .btn-primary:hover::before {
+    opacity: 1;
+  }
+
+  .btn-primary span {
+    @apply relative z-10;
+  }
+
+  .btn-outline {
+    @apply relative inline-flex items-center justify-center px-8 py-3
+           font-heading font-semibold text-primary
+           rounded-lg border-2 border-primary/50
+           transition-all duration-300
+           hover:border-primary hover:bg-primary/10 hover:shadow-glow
+           active:scale-95;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center px-6 py-2
+           font-heading font-medium text-gray-300
+           rounded-lg transition-all duration-300
+           hover:text-primary hover:bg-primary/5;
+  }
+}
+
+/* ============================================
+   CARDS
+   ============================================ */
+@layer components {
+  .card {
+    @apply relative p-6 rounded-xl
+           bg-dark-light/50 backdrop-blur-sm
+           border border-white/5
+           transition-all duration-500
+           hover:border-primary/30 hover:bg-dark-light/70;
+  }
+
+  .card-glow {
+    @apply relative overflow-hidden;
+  }
+
+  .card-glow::before {
+    content: '';
+    @apply absolute -inset-px rounded-xl
+           bg-gradient-to-r from-primary/20 via-transparent to-secondary/20
+           opacity-0 transition-opacity duration-500;
+  }
+
+  .card-glow:hover::before {
+    opacity: 1;
+  }
+
+  .card-tech {
+    @apply relative p-6 rounded-xl
+           bg-gradient-to-br from-dark-light/80 to-dark/80
+           border border-primary/10
+           transition-all duration-500;
+  }
+
+  .card-tech:hover {
+    @apply border-primary/30 shadow-glow;
+    transform: translateY(-5px);
+  }
+}
+
+/* ============================================
+   SECTION STYLES
+   ============================================ */
+@layer components {
+  .section-title {
+    @apply font-display text-4xl md:text-5xl font-bold tracking-tight text-white;
+  }
+
+  .section-subtitle {
+    @apply text-lg text-gray-400 max-w-2xl leading-relaxed;
+  }
+
+  .section-tag {
+    @apply text-primary uppercase tracking-[0.2em] text-sm font-medium;
+  }
+}
+
+/* ============================================
+   RADAR CHART STYLES
+   ============================================ */
+.radar-container {
+  @apply relative;
+}
+
+.radar-grid {
+  stroke: rgba(0, 217, 255, 0.1);
+  fill: none;
+}
+
+.radar-axis {
+  stroke: rgba(0, 217, 255, 0.15);
+}
+
+.radar-area {
+  fill: rgba(0, 217, 255, 0.1);
+  stroke: var(--primary);
+  stroke-width: 2;
+  transition: all 0.3s ease;
+}
+
+.radar-area:hover {
+  fill: rgba(0, 217, 255, 0.2);
+}
+
+.radar-point {
+  fill: var(--primary);
+  transition: all 0.3s ease;
+}
+
+.radar-point:hover {
+  r: 8;
+  filter: drop-shadow(0 0 10px var(--primary));
+}
+
+.radar-label {
+  @apply fill-gray-300 text-sm font-medium;
+  transition: fill 0.3s ease;
+}
+
+.radar-label:hover {
+  @apply fill-primary;
+}
+
+/* ============================================
+   TIMELINE STYLES
+   ============================================ */
+.timeline {
+  @apply relative;
+}
+
+.timeline::before {
+  content: '';
+  @apply absolute left-0 md:left-1/2 top-0 bottom-0 w-px
+         bg-gradient-to-b from-primary via-secondary to-accent;
+  transform: translateX(-50%);
+}
+
+.timeline-item {
+  @apply relative pl-8 md:pl-0 pb-12;
+}
+
+.timeline-dot {
+  @apply absolute left-0 md:left-1/2 w-4 h-4
+         bg-primary rounded-full
+         transform -translate-x-1/2 md:-translate-x-1/2
+         shadow-glow z-10;
+}
+
+.timeline-dot::before {
+  content: '';
+  @apply absolute inset-0 rounded-full bg-primary
+         animate-ping opacity-20;
+}
+
+/* ============================================
+   CERTIFICATION BADGE
+   ============================================ */
+.cert-badge {
+  @apply relative p-1 rounded-xl overflow-hidden;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+}
+
+.cert-badge-inner {
+  @apply bg-dark-light rounded-xl p-4;
+}
+
+/* ============================================
+   SKILL CATEGORY COLORS
+   ============================================ */
+.skill-frontend { --skill-color: #3B82F6; }
+.skill-backend { --skill-color: #10B981; }
+.skill-ai { --skill-color: #8B5CF6; }
+.skill-iot { --skill-color: #F59E0B; }
+.skill-robotics { --skill-color: #EF4444; }
+.skill-cad { --skill-color: #EC4899; }
+.skill-cloud { --skill-color: #06B6D4; }
+.skill-embedded { --skill-color: #6366F1; }
+
+/* ============================================
+   ANIMATIONS
+   ============================================ */
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-20px); }
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes pulse-border {
+  0%, 100% { border-color: rgba(0, 217, 255, 0.3); }
+  50% { border-color: rgba(0, 217, 255, 0.8); }
+}
+
+@keyframes scan {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100%); }
+}
+
+/* Typing animation */
+.typing-container {
+  @apply inline-block;
+}
+
+.typing-text {
+  @apply border-r-2 border-primary;
+  animation: blink 1s step-end infinite;
+}
+
+/* Fade in up animation */
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stagger children delay utility */
+.stagger-1 { animation-delay: 0.1s; }
+.stagger-2 { animation-delay: 0.2s; }
+.stagger-3 { animation-delay: 0.3s; }
+.stagger-4 { animation-delay: 0.4s; }
+.stagger-5 { animation-delay: 0.5s; }
+
+/* ============================================
+   RESPONSIVE UTILITIES
+   ============================================ */
+@layer utilities {
+  .container-custom {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* ============================================
+   LOADING STATES
+   ============================================ */
+.skeleton {
+  @apply bg-gradient-to-r from-dark-light via-dark-lighter to-dark-light
+         bg-[length:200%_100%] animate-pulse rounded;
+}
+
+/* ============================================
+   FORM STYLES
+   ============================================ */
+@layer components {
+  .input-field {
+    @apply w-full px-4 py-3 rounded-lg
+           bg-dark-light/50 border border-white/10
+           text-white placeholder-gray-500
+           transition-all duration-300
+           focus:outline-none focus:border-primary/50 focus:bg-dark-light/70
+           focus:shadow-glow;
+  }
+
+  .textarea-field {
+    @apply input-field resize-none min-h-[120px];
+  }
+
+  .label-field {
+    @apply block text-sm font-medium text-gray-300 mb-2;
+  }
+}
+
+/* ============================================
+   CODE BLOCK STYLES
+   ============================================ */
+.code-block {
+  @apply font-mono text-sm p-4 rounded-lg
+         bg-dark/80 border border-primary/10
+         overflow-x-auto;
+}
+
+.code-inline {
+  @apply font-mono text-sm px-2 py-0.5 rounded
+         bg-primary/10 text-primary;
+}
+
+/* ============================================
+   NOISE TEXTURE OVERLAY
+   ============================================ */
+.noise-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+  opacity: 0.02;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
