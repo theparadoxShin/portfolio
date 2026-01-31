@@ -64,6 +64,29 @@ body {
 }
 
 /* ============================================
+   RECAPTCHA BADGE IN FORM
+   ============================================ */
+#recaptcha-container .grecaptcha-badge {
+  position: relative !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  top: auto !important;
+  transform: none !important;
+  box-shadow: none !important;
+  display: inline-block !important;
+  width: 256px !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Hide the default floating badge when container exists */
+body .grecaptcha-badge:not(#recaptcha-container .grecaptcha-badge) {
+  visibility: hidden !important;
+  opacity: 0 !important;
+}
+
+/* ============================================
    TEXT GRADIENTS
    ============================================ */
 @layer utilities {

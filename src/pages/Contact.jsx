@@ -9,7 +9,7 @@ import { useRecaptcha } from '../hooks/useRecaptcha';
 
 const Contact = () => {
   const { submitContact, loading, error, success, reset } = useContact();
-  const { executeRecaptcha, isLoaded: recaptchaLoaded } = useRecaptcha();
+  const { executeRecaptcha, isLoaded: recaptchaLoaded, isConfigured: recaptchaConfigured, error: recaptchaError } = useRecaptcha();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -18,17 +18,31 @@ const Contact = () => {
     source: 'portfolio'
   });
   const [focusedField, setFocusedField] = useState(null);
+  const [formError, setFormError] = useState(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setFormError(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setFormError(null);
+    
+    // Check if reCAPTCHA is configured
+    if (!recaptchaConfigured) {
+      setFormError('reCAPTCHA is not configured. Please contact the administrator.');
+      return;
+    }
     
     // Get reCAPTCHA token
     const recaptchaToken = await executeRecaptcha('contact_form');
+    
+    if (!recaptchaToken) {
+      setFormError('reCAPTCHA verification failed. Please try again.');
+      return;
+    }
     
     const result = await submitContact(formData, recaptchaToken);
     if (result) {
@@ -193,15 +207,23 @@ const Contact = () => {
             >
               <h4 className="text-white font-medium mb-4">Quick Links</h4>
               <div className="flex flex-wrap gap-2">
-                {['Resume', 'Projects', 'LinkedIn', 'GitHub'].map((link) => (
+                {[
+                  { label: 'Resume', href: '/resume.pdf', download: true, external: false },
+                  { label: 'Projects', href: '/projects', download: false, external: false },
+                  { label: 'LinkedIn', href: 'https://www.linkedin.com/in/parfait-ben-oni-tedom-tedom-496bb6135/', download: false, external: true },
+                  { label: 'GitHub', href: 'https://github.com/theparadoxShin', download: false, external: true }
+                ].map((link) => (
                   <motion.a
-                    key={link}
-                    href={link === 'Projects' ? '/projects' : '#'}
+                    key={link.label}
+                    href={link.href}
+                    download={link.download || undefined}
+                    target={link.external ? '_blank' : undefined}
+                    rel={link.external ? 'noopener noreferrer' : undefined}
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     className="px-4 py-2 rounded-lg bg-white/5 text-gray-300 hover:text-primary hover:bg-white/10 transition-all text-sm"
                   >
-                    {link}
+                    {link.label}
                   </motion.a>
                 ))}
               </div>
@@ -321,27 +343,34 @@ const Contact = () => {
 
                     {/* Error Message */}
                     <AnimatePresence>
-                      {error && (
+                      {(error || formError || recaptchaError) && (
                         <motion.div
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -10 }}
                           className="p-4 rounded-lg bg-red-500/20 border border-red-500/30 text-red-400"
                         >
-                          {error}
+                          {error || formError || recaptchaError}
                         </motion.div>
                       )}
                     </AnimatePresence>
 
+                    {/* reCAPTCHA Warning */}
+                    {!recaptchaConfigured && (
+                      <div className="p-3 rounded-lg bg-yellow-500/20 border border-yellow-500/30 text-yellow-400 text-sm">
+                        ⚠️ reCAPTCHA is not configured. Form submission is disabled.
+                      </div>
+                    )}
+
                     {/* Submit Button */}
                     <motion.button
                       type="submit"
-                      disabled={loading}
-                      whileHover={{ scale: loading ? 1 : 1.02 }}
-                      whileTap={{ scale: loading ? 1 : 0.98 }}
+                      disabled={loading || !recaptchaLoaded || !recaptchaConfigured}
+                      whileHover={{ scale: (loading || !recaptchaConfigured) ? 1 : 1.02 }}
+                      whileTap={{ scale: (loading || !recaptchaConfigured) ? 1 : 0.98 }}
                       className={`
                         w-full py-4 rounded-lg font-medium text-lg transition-all duration-300
-                        ${loading 
+                        ${loading || !recaptchaLoaded || !recaptchaConfigured
                           ? 'bg-gray-600 cursor-not-allowed' 
                           : 'bg-primary text-dark hover:shadow-lg hover:shadow-primary/30'}
                       `}
@@ -363,6 +392,9 @@ const Contact = () => {
                         </span>
                       )}
                     </motion.button>
+
+                    {/* reCAPTCHA Badge Container */}
+                    <div id="recaptcha-container" className="flex justify-center mt-4"></div>
                   </motion.form>
                 )}
               </AnimatePresence>

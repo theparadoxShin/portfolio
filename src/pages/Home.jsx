@@ -138,7 +138,7 @@ const HeroSection = () => {
                 </span>
               </Link>
               <a 
-                href="/cv-ben-parfait.pdf" 
+                href="/resume.pdf" 
                 download
                 className="btn-outline"
               >
