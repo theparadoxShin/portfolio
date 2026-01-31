@@ -1,0 +1,15 @@
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteBase /
+  
+  # Rediriger vers l'index si le fichier ou dossier n'existe pas physiquement
+  RewriteCond %{REQUEST_FILENAME} !-f
+  RewriteCond %{REQUEST_FILENAME} !-d
+  
+  # Exclure certains types de fichiers pour éviter de servir l'index.html 
+  # à la place d'images ou de scripts manquants (optionnel mais recommandé)
+  RewriteCond %{REQUEST_URI} !\.(css|js|jpg|png|gif|svg|ico|webp)$ [NC]
+
+  # Redirection de toutes les routes virtuelles vers index.html
+  RewriteRule ^ index.html [L]
+</IfModule>

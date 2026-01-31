@@ -212,21 +212,60 @@ const ExperienceCard = ({ experience, index }) => {
       <div className="card ml-0 lg:ml-8">
         {/* Header */}
         <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-          <div>
-            <div className="flex items-center gap-2 mb-2">
-              {experience.isCurrent && (
-                <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 font-medium">
-                  Current
-                </span>
-              )}
-              <span className="text-gray-500 text-sm capitalize">{experience.type}</span>
-            </div>
-            <h3 className="font-heading text-2xl font-bold text-white mb-1">
-              {experience.position}
-            </h3>
-            <div className="flex items-center text-primary font-medium">
-              <Building2 size={16} className="mr-2" />
-              {experience.company}
+          <div className="flex items-start gap-4">
+            {/* Company Logo */}
+            {experience.companyLogo ? (
+              <div 
+                className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border border-white/10"
+                style={{ backgroundColor: experience.color + '20' }}
+              >
+                <img 
+                  src={experience.companyLogo} 
+                  alt={experience.company}
+                  className="w-full h-full object-contain p-1"
+                />
+              </div>
+            ) : (
+              <div 
+                className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center"
+                style={{ backgroundColor: experience.color + '20' }}
+              >
+                <Building2 size={24} style={{ color: experience.color }} />
+              </div>
+            )}
+            
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                {experience.isCurrent && (
+                  <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 font-medium">
+                    Current
+                  </span>
+                )}
+                <span className="text-gray-500 text-sm capitalize">{experience.type}</span>
+              </div>
+              <h3 className="font-heading text-2xl font-bold text-white mb-1">
+                {experience.position}
+              </h3>
+              <div className="flex items-center text-primary font-medium">
+                {experience.companyUrl ? (
+                  <a 
+                    href={experience.companyUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="flex items-center hover:underline"
+                    style={{ color: experience.color }}
+                  >
+                    <Building2 size={16} className="mr-2" />
+                    {experience.company}
+                    <ExternalLink size={12} className="ml-1 opacity-60" />
+                  </a>
+                ) : (
+                  <>
+                    <Building2 size={16} className="mr-2" />
+                    {experience.company}
+                  </>
+                )}
+              </div>
             </div>
           </div>
           

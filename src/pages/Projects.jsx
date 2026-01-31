@@ -173,6 +173,9 @@ const ProjectCard = ({ project, index }) => {
     'cad': 'from-pink-500 to-rose-600',
   }
   const color = colorMap[project.category] || 'from-gray-500 to-gray-600'
+  
+  // Get primary image or first image
+  const primaryImage = project.images?.find(img => img.isPrimary) || project.images?.[0]
 
   return (
     <motion.div
@@ -186,11 +189,18 @@ const ProjectCard = ({ project, index }) => {
     >
       <div className="card h-full flex flex-col">
         {/* Image/Gradient Header */}
-        <div className={`relative h-48 rounded-lg mb-6 bg-gradient-to-br ${color} 
-                        overflow-hidden`}>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <Layers className="text-white/20" size={64} />
-          </div>
+        <div className={`relative h-48 rounded-lg mb-6 overflow-hidden ${!primaryImage?.url ? `bg-gradient-to-br ${color}` : ''}`}>
+          {primaryImage?.url ? (
+            <img 
+              src={primaryImage.url} 
+              alt={primaryImage.alt || project.title}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          ) : (
+            <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${color}`}>
+              <Layers className="text-white/20" size={64} />
+            </div>
+          )}
           
           {/* Featured badge */}
           {project.featured && (
