@@ -487,7 +487,7 @@ const Certifications = () => {
             </h3>
             <p className="text-gray-400 mb-6">
               I'm committed to staying at the forefront of technology. 
-              Currently pursuing AWS Solutions Architect and more AI certifications.
+              Currently pursuing AWS, Nvidia, and more AI certifications.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <motion.a

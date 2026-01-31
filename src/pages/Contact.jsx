@@ -2,12 +2,14 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Mail, Linkedin, Github, MapPin, Send, MessageSquare,
-  Bot, Cloud, Zap, Globe, CheckCircle2
+  Bot, Cloud, Zap, Globe, CheckCircle2, Shield
 } from 'lucide-react';
 import { useContact } from '../hooks/useApi';
+import { useRecaptcha } from '../hooks/useRecaptcha';
 
 const Contact = () => {
   const { submitContact, loading, error, success, reset } = useContact();
+  const { executeRecaptcha, isLoaded: recaptchaLoaded } = useRecaptcha();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,7 +26,11 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const result = await submitContact(formData);
+    
+    // Get reCAPTCHA token
+    const recaptchaToken = await executeRecaptcha('contact_form');
+    
+    const result = await submitContact(formData, recaptchaToken);
     if (result) {
       setFormData({ name: '', email: '', subject: '', message: '', source: 'portfolio' });
     }
@@ -41,21 +47,21 @@ const Contact = () => {
     {
       icon: Linkedin,
       label: 'LinkedIn',
-      value: 'Ben Parfait Tedomtedom',
-      href: 'https://linkedin.com/in/parfaittedomtedom',
+      value: 'Parfait Ben-oni Tedom Tedom',
+      href: 'https://www.linkedin.com/in/parfait-ben-oni-tedom-tedom-496bb6135/',
       color: '#0077B5'
     },
     {
       icon: Github,
       label: 'GitHub',
-      value: '@parfaittedomtedom',
-      href: 'https://github.com/parfaittedomtedom',
+      value: '@theparadoxShin',
+      href: 'https://github.com/theparadoxShin',
       color: '#8B5CF6'
     },
     {
       icon: MapPin,
       label: 'Location',
-      value: 'Montreal, QC, Canada',
+      value: 'Edmonton, AB, Canada',
       href: null,
       color: '#10B981'
     }
@@ -174,7 +180,7 @@ const Contact = () => {
               </div>
               <p className="text-gray-400 text-sm">
                 Currently open for freelance projects, consulting, and full-time positions 
-                in robotics, AI, and full-stack development.
+                in full-stack development, AI/ML, and IoT, robotics, and cloud computing.
               </p>
             </motion.div>
 
@@ -388,7 +394,7 @@ const Contact = () => {
               ))}
             </div>
             <h3 className="text-2xl md:text-3xl font-bold text-white mb-4">
-              Based in Montreal, Working Globally
+              Based in Edmonton, Working Globally
             </h3>
             <p className="text-gray-400 max-w-2xl mx-auto">
               Whether you're in North America, Europe, or anywhere else, 

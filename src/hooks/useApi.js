@@ -195,14 +195,14 @@ export const useSkills = () => {
 };
 
 /**
- * Hook for contact form submission
+ * Hook for contact form submission with reCAPTCHA support
  */
 export const useContact = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
 
-  const submitContact = async (formData) => {
+  const submitContact = async (formData, recaptchaToken = null) => {
     setLoading(true);
     setError(null);
     setSuccess(false);
@@ -213,7 +213,10 @@ export const useContact = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          recaptchaToken
+        }),
       });
 
       if (!response.ok) {

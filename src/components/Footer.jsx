@@ -18,10 +18,10 @@ const Footer = () => {
   ]
 
   const socialLinks = [
-    { icon: Github, href: 'https://github.com/parfaittedomtedom', label: 'GitHub' },
-    { icon: Linkedin, href: 'https://linkedin.com/in/parfaittedomtedom', label: 'LinkedIn' },
-    { icon: Twitter, href: 'https://twitter.com/parfaittedom', label: 'Twitter' },
-    { icon: Mail, href: 'mailto:contact@daemoncraft.ca', label: 'Email' },
+    { icon: Github, href: 'https://github.com/theparadoxShin', label: 'GitHub' },
+    { icon: Linkedin, href: 'https://www.linkedin.com/in/parfait-ben-oni-tedom-tedom-496bb6135', label: 'LinkedIn' },
+    { icon: Twitter, href: 'https://x.com/PTedom77132', label: 'Twitter' },
+    { icon: Mail, href: 'mailto:me@parfaittedomtedom.com', label: 'Email' },
   ]
 
   const expertise = [
@@ -54,19 +54,19 @@ const Footer = () => {
                 <Terminal className="text-dark" size={20} />
               </motion.div>
               <div className="flex flex-col">
-                <span className="font-display font-bold text-white text-lg">Ben Parfait</span>
-                <span className="text-xs text-primary font-mono">Full Stack Robotics Engineer</span>
+                <span className="font-display font-bold text-white text-lg">Parfait Ben-oni Tedom Tedom</span>
+                <span className="text-xs text-primary font-mono">Full Stack Engineer</span>
               </div>
             </Link>
             
             <p className="text-gray-400 text-sm mb-6 leading-relaxed">
               Crafting intelligent solutions at the intersection of software, 
-              hardware, and artificial intelligence. From Montreal 🇨🇦
+              hardware, and artificial intelligence. From Edmonton 🇨🇦
             </p>
 
             <div className="flex items-center text-sm text-gray-500">
               <MapPin size={14} className="mr-2 text-primary" />
-              <span>Montreal, Quebec, Canada</span>
+              <span>Edmonton, Alberta, Canada</span>
             </div>
           </div>
 
@@ -128,11 +128,11 @@ const Footer = () => {
 
             {/* CTA */}
             <a
-              href="mailto:contact@daemoncraft.ca"
+              href="mailto:me@parfaittedomtedom.com"
               className="inline-flex items-center text-sm text-primary hover:text-primary-light
                          transition-colors duration-300 group"
             >
-              <span>contact@daemoncraft.ca</span>
+              <span>me@parfaittedomtedom.com</span>
               <ArrowUpRight 
                 size={14} 
                 className="ml-1 transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" 
@@ -147,11 +147,7 @@ const Footer = () => {
         <div className="container-custom py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-gray-500 text-sm">
-              &copy; {currentYear} Ben Parfait. All rights reserved.
-            </p>
-            
-            <p className="text-gray-500 text-sm flex items-center">
-              Built with <Heart size={14} className="mx-1 text-red-500" /> using React & Tailwind
+              &copy; {currentYear} Parfait Tedom tedom. All rights reserved.
             </p>
 
             <div className="flex items-center space-x-4">
@@ -161,7 +157,7 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 className="text-gray-500 hover:text-primary text-sm transition-colors"
               >
-                Daemon Craft Inc.
+                Parfait Tedom Tedom at Daemon Craft Inc.
               </a>
             </div>
           </div>

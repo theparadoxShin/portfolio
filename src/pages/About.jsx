@@ -78,10 +78,10 @@ const BioSection = () => {
                 {/* Overlay info */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-dark to-transparent">
                   <h3 className="font-display text-2xl font-bold text-white mb-1">
-                    Ben Parfait Tedom Tedom
+                    Parfait ben-oni Tedom Tedom
                   </h3>
                   <p className="text-primary font-mono text-sm">
-                    Full Stack Robotics Engineer
+                    Full Stack Engineer
                   </p>
                 </div>
               </div>
@@ -94,7 +94,7 @@ const BioSection = () => {
               >
                 <div className="flex items-center space-x-2">
                   <MapPin className="text-primary" size={16} />
-                  <span className="text-sm text-white">Montreal, CA</span>
+                  <span className="text-sm text-white">Edmonton, CA</span>
                 </div>
               </motion.div>
 
@@ -115,7 +115,7 @@ const BioSection = () => {
           <div>
             <motion.div variants={fadeInUp} className="space-y-6 text-gray-300">
               <p className="text-lg leading-relaxed">
-                <span className="text-primary font-semibold">Hello!</span> I'm Ben Parfait, 
+                <span className="text-primary font-semibold">Hello!</span> I'm Parfait ben-oni Tedom Tedom, 
                 a Mechatronics Engineer with a passion for building intelligent systems that 
                 make a real impact on people's lives.
               </p>
@@ -128,10 +128,10 @@ const BioSection = () => {
               </p>
 
               <p className="leading-relaxed">
-                Now based in Montreal, Canada, I work at the intersection of 
+                Now based in Edmonton, Alberta, Canada, I work at the intersection of 
                 <span className="text-primary"> AI</span>, 
-                <span className="text-secondary"> robotics</span>, and 
-                <span className="text-accent"> full-stack development</span>. 
+                <span className="text-secondary"> full-stack development</span>, and 
+                <span className="text-accent"> robotics</span>. 
                 Whether it's building AI agents that help immigrants navigate their new home, 
                 designing IoT systems, or developing mobile applications, I bring the same 
                 level of passion and attention to detail.
@@ -149,8 +149,8 @@ const BioSection = () => {
               className="grid grid-cols-2 gap-4 mt-8"
             >
               {[
-                { icon: MapPin, label: 'Location', value: 'Montreal, QC' },
-                { icon: Calendar, label: 'Experience', value: '5+ Years' },
+                { icon: MapPin, label: 'Location', value: 'Edmonton, AB' },
+                { icon: Calendar, label: 'Experience', value: '6+ Years' },
                 { icon: BookOpen, label: 'Education', value: 'Mechatronics Eng.' },
                 { icon: Rocket, label: 'Company', value: 'Daemon Craft Inc.' },
               ].map((fact, i) => (
@@ -264,7 +264,7 @@ const JourneySection = () => {
 
   const milestones = [
     {
-      year: '2018',
+      year: '2019',
       title: 'Engineering Degree',
       description: 'Graduated with a Mechatronics Engineering degree from Cameroon.',
       color: 'bg-blue-500'
@@ -276,22 +276,16 @@ const JourneySection = () => {
       color: 'bg-green-500'
     },
     {
-      year: '2022',
+      year: '2024',
       title: 'Moved to Canada',
-      description: 'Relocated to Montreal to pursue new opportunities and challenges.',
+      description: 'Relocated to Edmonton to pursue new opportunities and challenges.',
       color: 'bg-purple-500'
     },
     {
-      year: '2023',
+      year: '2025',
       title: 'Founded Daemon Craft',
       description: 'Launched my own company focused on AI, IoT, and intelligent solutions.',
       color: 'bg-orange-500'
-    },
-    {
-      year: '2024',
-      title: 'AI/ML Certifications',
-      description: 'Obtained AWS and DeepLearning.AI certifications to expand expertise.',
-      color: 'bg-pink-500'
     },
     {
       year: '2025',

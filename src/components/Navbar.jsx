@@ -57,7 +57,7 @@ const Navbar = () => {
               </motion.div>
               <div className="flex flex-col">
                 <span className="font-display font-bold text-white text-lg leading-tight">
-                  Ben Parfait
+                  Parfait Tedom Tedom
                 </span>
                 <span className="text-xs text-primary font-mono">
                   &lt;FullStackEngineer /&gt;
@@ -230,7 +230,7 @@ const Navbar = () => {
                   transition={{ delay: 0.4 }}
                   className="mt-8 text-center text-sm text-gray-500"
                 >
-                  <p className="font-mono">&copy; 2025 Ben Parfait</p>
+                  <p className="font-mono">&copy; {new Date().getFullYear()} Parfait Tedom Tedom</p>
                 </motion.div>
               </div>
             </motion.div>

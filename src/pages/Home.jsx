@@ -123,7 +123,7 @@ const HeroSection = () => {
               className="text-lg text-gray-400 max-w-xl mb-8 leading-relaxed"
             >
               Mechatronics Engineer passionate about building intelligent systems 
-              that bridge the gap between software, hardware, and AI. Based in Montreal, Canada.
+              that bridge the gap between software, hardware, and AI. Based in Edmonton, Alberta, Canada.
             </motion.p>
 
             {/* CTA Buttons */}

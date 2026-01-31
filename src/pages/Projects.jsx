@@ -362,7 +362,7 @@ const StatsSection = () => {
     { value: '20+', label: 'Projects Completed' },
     { value: '15+', label: 'Happy Clients' },
     { value: '5+', label: 'Open Source' },
-    { value: '3', label: 'Hackathon Wins' },
+    { value: '4', label: 'Hackathon Finals/Wins' },
   ]
 
   return (

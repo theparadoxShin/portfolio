@@ -88,15 +88,15 @@ const fallbackSkillCategories = [
     name: 'Frontend Development',
     icon: Code2,
     color: '#3B82F6',
-    level: 85,
+    level: 72,
     description: 'Building responsive and interactive user interfaces',
     skills: [
       { name: 'React / React Native', level: 90 },
-      { name: 'TypeScript', level: 85 },
-      { name: 'Next.js', level: 80 },
-      { name: 'Tailwind CSS', level: 90 },
-      { name: 'Framer Motion', level: 75 },
-      { name: 'Vue.js', level: 70 },
+      { name: 'TypeScript', level: 72 },
+      { name: 'Next.js', level: 68 },
+      { name: 'Tailwind CSS', level: 77 },
+      { name: 'Framer Motion', level: 64 },
+      { name: 'Vue.js', level: 60 },
     ]
   },
   {
@@ -152,15 +152,15 @@ const fallbackSkillCategories = [
     name: 'Robotics',
     icon: Cog,
     color: '#EF4444',
-    level: 75,
+    level: 60,
     description: 'Autonomous systems and mechatronics',
     skills: [
-      { name: 'ROS / ROS2', level: 78 },
-      { name: 'Motion Control', level: 80 },
-      { name: 'SLAM / Navigation', level: 72 },
-      { name: 'Kinematics', level: 75 },
-      { name: 'Sensor Fusion', level: 70 },
-      { name: 'PLC Programming', level: 68 },
+      { name: 'ROS / ROS2', level: 62 },
+      { name: 'Motion Control', level: 64 },
+      { name: 'SLAM / Navigation', level: 58 },
+      { name: 'Kinematics', level: 60 },
+      { name: 'Sensor Fusion', level: 56 },
+      { name: 'PLC Programming', level: 54 },
     ]
   },
   {
@@ -168,15 +168,15 @@ const fallbackSkillCategories = [
     name: 'CAD & Design',
     icon: PenTool,
     color: '#EC4899',
-    level: 70,
+    level: 56,
     description: 'Mechanical design and 3D modeling',
     skills: [
-      { name: 'SolidWorks', level: 75 },
-      { name: 'AutoCAD', level: 70 },
-      { name: 'Fusion 360', level: 72 },
-      { name: '3D Printing', level: 80 },
-      { name: 'PCB Design', level: 68 },
-      { name: 'Technical Drawing', level: 75 },
+      { name: 'SolidWorks', level: 60 },
+      { name: 'AutoCAD', level: 56 },
+      { name: 'Fusion 360', level: 58 },
+      { name: '3D Printing', level: 64 },
+      { name: 'PCB Design', level: 54 },
+      { name: 'Technical Drawing', level: 60 },
     ]
   },
   {
@@ -233,6 +233,22 @@ const transformSkillsToCategories = (apiSkills) => {
     const mainSkill = skills.find(s => s.isRadarSkill)
     const avgLevel = mainSkill?.level || Math.round(skills.reduce((sum, s) => sum + s.level, 0) / skills.length)
     
+    // If main skill has subSkills, use those; otherwise use non-radar skills
+    let displaySkills = []
+    if (mainSkill?.subSkills && mainSkill.subSkills.length > 0) {
+      displaySkills = mainSkill.subSkills.map(s => ({
+        name: s.name,
+        level: s.level
+      }))
+    } else {
+      displaySkills = skills
+        .filter(s => !s.isRadarSkill)
+        .map(s => ({
+          name: s.name,
+          level: s.level
+        }))
+    }
+    
     return {
       key: categoryKey,
       name: categoryNames[categoryKey] || categoryKey,
@@ -240,14 +256,7 @@ const transformSkillsToCategories = (apiSkills) => {
       color: categoryColors[categoryKey] || '#6B7280',
       level: avgLevel,
       description: categoryDescriptions[categoryKey] || 'Technical skills',
-      skills: skills
-        .filter(s => !s.isRadarSkill)
-        .map(s => ({
-          name: s.name,
-          level: s.level,
-          ...s.subSkills && { subSkills: s.subSkills }
-        }))
-        .sort((a, b) => (b.level || 0) - (a.level || 0))
+      skills: displaySkills.sort((a, b) => (b.level || 0) - (a.level || 0))
     }
   }).sort((a, b) => b.level - a.level)
 }
@@ -302,12 +311,12 @@ const RadarSection = () => {
     }
     // Default radar skills
     return {
-      frontend: 85,
+      frontend: 72,
       backend: 90,
       'ai-ml': 88,
       iot: 82,
-      robotics: 75,
-      cad: 70,
+      robotics: 60,
+      cad: 56,
       cloud: 85,
       embedded: 78,
     }
@@ -456,14 +465,12 @@ const SkillsGridSection = () => {
     return transformSkillsToCategories(apiSkills)
   }, [apiSkills])
   
-  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState('frontend')
   
-  // Set default selected category once data is loaded
-  useMemo(() => {
-    if (skillCategories.length > 0 && !selectedCategory) {
-      setSelectedCategory(skillCategories[0])
-    }
-  }, [skillCategories, selectedCategory])
+  // Get selected category from key
+  const selectedCategory = useMemo(() => {
+    return skillCategories.find(cat => cat.key === selectedCategoryKey) || skillCategories[0]
+  }, [skillCategories, selectedCategoryKey])
 
   return (
     <section ref={ref} className="py-20">
@@ -481,8 +488,8 @@ const SkillsGridSection = () => {
                 <SkillCategoryCard
                   key={category.key}
                   category={category}
-                  isSelected={selectedCategory?.key === category.key}
-                  onClick={() => setSelectedCategory(category)}
+                  isSelected={selectedCategoryKey === category.key}
+                  onClick={() => setSelectedCategoryKey(category.key)}
                 />
               ))}
             </motion.div>
