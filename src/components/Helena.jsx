@@ -9,7 +9,7 @@ const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 // Suggested questions for users
 const SUGGESTED_QUESTIONS = [
-  "What are Ben's main skills?",
+  "What are Parfait's main skills?",
   "Tell me about his AI/ML projects",
   "What certifications does he have?",
   "What's his work experience?",
@@ -22,7 +22,7 @@ function Helena() {
   const [messages, setMessages] = useState([
     {
       role: 'assistant',
-      content: "Hi! I'm Helena, Ben's AI assistant. I can tell you all about his skills, projects, experience, and more. What would you like to know?"
+      content: "Hi! I'm Helena, Parfait's AI assistant. I can tell you all about his skills, projects, experience, and more. What would you like to know?"
     }
   ])
   const [input, setInput] = useState('')
@@ -71,7 +71,7 @@ function Helena() {
       console.error('Helena chat error:', error)
       setMessages(prev => [...prev, { 
         role: 'assistant', 
-        content: "I'm sorry, I'm having trouble connecting right now. Please try again later or contact Ben directly via the contact form." 
+        content: "I'm sorry, I'm having trouble connecting right now. Please try again later or contact Parfait directly via the contact form." 
       }])
     } finally {
       setIsLoading(false)
@@ -244,7 +244,7 @@ function Helena() {
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyPress={handleKeyPress}
-                      placeholder="Ask me anything about Ben..."
+                      placeholder="Ask me anything about Parfait..."
                       className="flex-1 bg-dark border border-white/10 rounded-xl px-4 py-2.5
                                text-white placeholder-gray-500 text-sm
                                focus:outline-none focus:border-primary/50 transition-colors"

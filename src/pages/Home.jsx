@@ -103,7 +103,7 @@ const HeroSection = () => {
               className="font-display text-5xl md:text-6xl lg:text-7xl font-bold mb-4"
             >
               <span className="text-white">I'm </span>
-              <span className="text-gradient">Ben Parfait</span>
+              <span className="text-gradient">Parfait Tedom Tedom</span>
             </motion.h1>
 
             {/* Dynamic title */}
@@ -209,7 +209,7 @@ const HeroSection = () => {
                               border-4 border-primary/30 shadow-glow-lg">
                 <img 
                   src={photoBen} 
-                  alt="Ben Parfait" 
+                  alt="Parfait Tedom Tedom" 
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -309,7 +309,7 @@ const SkillsPreview = () => {
               <SectionTag>Technical Expertise</SectionTag>
             </motion.div>
             <motion.h2 variants={fadeInUp} className="section-title mb-6">
-              Full Stack <span className="text-gradient">Robotics</span> Engineer
+              Full Stack <span className="text-gradient">Engineer</span>
             </motion.h2>
             <motion.p variants={fadeInUp} className="section-subtitle mb-8">
               A unique blend of software engineering, AI/ML expertise, and hardware 

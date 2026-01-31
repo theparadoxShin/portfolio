@@ -71,14 +71,14 @@ const BioSection = () => {
               <div className="relative rounded-2xl overflow-hidden border border-white/10">
                 <img 
                   src={photoBen} 
-                  alt="Ben Parfait" 
+                  alt="Parfait Tedom Tedom" 
                   className="w-full aspect-[4/5] object-cover"
                 />
                 
                 {/* Overlay info */}
                 <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-dark to-transparent">
                   <h3 className="font-display text-2xl font-bold text-white mb-1">
-                    Parfait ben-oni Tedom Tedom
+                    Parfait Ben-oni Tedom Tedom
                   </h3>
                   <p className="text-primary font-mono text-sm">
                     Full Stack Engineer
@@ -115,7 +115,7 @@ const BioSection = () => {
           <div>
             <motion.div variants={fadeInUp} className="space-y-6 text-gray-300">
               <p className="text-lg leading-relaxed">
-                <span className="text-primary font-semibold">Hello!</span> I'm Parfait ben-oni Tedom Tedom, 
+                <span className="text-primary font-semibold">Hello!</span> I'm Parfait Ben-oni Tedom Tedom, 
                 a Mechatronics Engineer with a passion for building intelligent systems that 
                 make a real impact on people's lives.
               </p>
