@@ -15,110 +15,7 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.1 } }
 }
 
-// Fallback experience data
-const fallbackExperiences = [
-  {
-    _id: '1',
-    position: 'Founder & Lead Engineer',
-    company: 'Daemon Craft Inc.',
-    location: { city: 'Edmonton', country: 'Canada', remote: true },
-    type: 'full-time',
-    startDate: '2023-09-01',
-    endDate: null,
-    isCurrent: true,
-    description: 'Founded and lead a technology company specializing in AI agents, IoT solutions, and intelligent software systems.',
-    responsibilities: [
-      'Architecting and developing AI agent systems',
-      'Designing IoT and embedded solutions',
-      'Leading project delivery and client relationships',
-      'Full-stack development of web and mobile applications'
-    ],
-    achievements: [
-      { title: 'Developed AI-powered immigration assistance platform serving 500+ users' },
-      { title: 'Built AR indoor navigation system for enterprise clients' },
-      { title: 'Won multiple hackathons with innovative AI solutions' },
-      { title: 'Established partnerships with technology providers' }
-    ],
-    technologies: ['Python', 'React Native', 'AWS', 'OpenAI', 'FastAPI', 'IoT'],
-    color: '#00D9FF'
-  },
-  {
-    _id: '2',
-    position: 'Full Stack Developer',
-    company: 'Tech Solutions Co.',
-    location: { city: 'Edmonton', country: 'Canada', remote: false },
-    type: 'contract',
-    startDate: '2022-06-01',
-    endDate: '2023-08-31',
-    isCurrent: false,
-    description: 'Developed web and mobile applications for various clients, focusing on scalable architecture and user experience.',
-    responsibilities: [
-      'Building e-commerce platforms',
-      'Implementing CI/CD pipelines',
-      'Cloud migration projects',
-      'Mentoring junior developers'
-    ],
-    achievements: [
-      { title: 'Built e-commerce platform handling 10K+ daily transactions' },
-      { title: 'Implemented CI/CD pipelines reducing deployment time by 60%' },
-      { title: 'Led migration of legacy systems to cloud infrastructure' },
-      { title: 'Mentored junior developers on best practices' }
-    ],
-    technologies: ['React', 'Node.js', 'PostgreSQL', 'Docker', 'AWS'],
-    color: '#8B5CF6'
-  },
-  {
-    _id: '3',
-    position: 'Software Engineer',
-    company: 'StartupXYZ',
-    location: { city: 'Douala', country: 'Cameroon', remote: true },
-    type: 'full-time',
-    startDate: '2020-03-01',
-    endDate: '2022-05-31',
-    isCurrent: false,
-    description: 'Joined early-stage startup building IoT solutions for agriculture sector in Africa.',
-    responsibilities: [
-      'Designing IoT architecture',
-      'Developing mobile applications',
-      'Integrating sensor networks',
-      'Hardware cost optimization'
-    ],
-    achievements: [
-      { title: 'Designed IoT architecture for smart farming system' },
-      { title: 'Developed mobile app with 5K+ downloads' },
-      { title: 'Integrated sensor networks for real-time monitoring' },
-      { title: 'Reduced hardware costs by 40% through optimization' }
-    ],
-    technologies: ['React Native', 'ESP32', 'MQTT', 'Firebase', 'Python'],
-    color: '#10B981'
-  },
-  {
-    _id: '4',
-    position: 'Mechatronics Engineer',
-    company: 'Engineering Solutions Ltd.',
-    location: { city: 'Douala', country: 'Cameroon', remote: false },
-    type: 'full-time',
-    startDate: '2018-09-01',
-    endDate: '2020-02-28',
-    isCurrent: false,
-    description: 'Applied mechatronics engineering skills to industrial automation and robotics projects.',
-    responsibilities: [
-      'Designing automated production lines',
-      'Programming PLC systems',
-      'Developing predictive maintenance algorithms',
-      'Creating technical documentation'
-    ],
-    achievements: [
-      { title: 'Designed automated production line components' },
-      { title: 'Programmed PLC systems for manufacturing' },
-      { title: 'Developed predictive maintenance algorithms' },
-      { title: 'Created technical documentation and training materials' }
-    ],
-    technologies: ['PLC', 'MATLAB', 'SolidWorks', 'C++', 'AutoCAD'],
-    color: '#F59E0B'
-  }
-]
-
+// Experience Card Component
 // Format date
 const formatDate = (dateString) => {
   if (!dateString) return 'Present'
@@ -331,8 +228,34 @@ const TimelineSection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
   const { experiences: apiExperiences, loading } = useExperiences()
   
-  // Use API data if available, otherwise fallback
-  const experiences = apiExperiences?.length > 0 ? apiExperiences : fallbackExperiences
+  // Use API data
+  const experiences = apiExperiences || []
+
+  // Empty state
+  if (!loading && experiences.length === 0) {
+    return (
+      <section ref={ref} className="py-20">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20"
+          >
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <Briefcase className="text-primary" size={48} />
+            </div>
+            <h3 className="text-2xl font-heading font-semibold text-white mb-4">
+              Experience Coming Soon
+            </h3>
+            <p className="text-gray-400 max-w-md mx-auto">
+              Work experience is not yet available or the section is currently under maintenance. 
+              Please check back later!
+            </p>
+          </motion.div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section ref={ref} className="py-20">
@@ -369,8 +292,11 @@ const SummarySection = () => {
   const [ref, inView] = useInView({ threshold: 0.3, triggerOnce: true })
   const { experiences: apiExperiences } = useExperiences()
   
-  // Use API data if available, otherwise fallback
-  const experiences = apiExperiences?.length > 0 ? apiExperiences : fallbackExperiences
+  // Use API data
+  const experiences = apiExperiences || []
+
+  // Don't show stats if no experiences
+  if (experiences.length === 0) return null
 
   const totalYears = experiences.reduce((acc, exp) => {
     const start = new Date(exp.startDate)

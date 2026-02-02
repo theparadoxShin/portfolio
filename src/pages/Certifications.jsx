@@ -25,100 +25,6 @@ const IconComponent = ({ name, size = 24, className = '' }) => {
   return <Icon size={size} className={className} />;
 };
 
-// Fallback certifications data
-const fallbackCertifications = [
-  {
-    _id: '1',
-    name: 'AWS Certified Cloud Practitioner',
-    issuer: 'Amazon Web Services',
-    issueDate: '2024-01-15',
-    credentialId: 'AWS-CCP-2024',
-    category: 'cloud',
-    level: 'foundational',
-    icon: 'cloud',
-    color: '#FF9900',
-    description: 'Foundational understanding of AWS Cloud concepts, services, security, architecture, pricing, and support.',
-    skills: ['AWS Services', 'Cloud Architecture', 'Security', 'Cost Management'],
-    credentialUrl: 'https://aws.amazon.com/verification',
-    isPublished: true
-  },
-  {
-    _id: '2',
-    name: 'AWS Certified AI Practitioner',
-    issuer: 'Amazon Web Services',
-    issueDate: '2024-03-20',
-    credentialId: 'AWS-AIP-2024',
-    category: 'ai-ml',
-    level: 'foundational',
-    icon: 'bot',
-    color: '#FF9900',
-    description: 'Demonstrates knowledge of AI/ML concepts and how to apply them using AWS services.',
-    skills: ['Machine Learning', 'AI Services', 'Amazon Bedrock', 'SageMaker'],
-    credentialUrl: 'https://aws.amazon.com/verification',
-    isPublished: true
-  },
-  {
-    _id: '3',
-    name: 'Generative AI with LLMs',
-    issuer: 'DeepLearning.AI',
-    issueDate: '2024-02-10',
-    credentialId: 'DLAI-GENAI-2024',
-    category: 'ai-ml',
-    level: 'associate',
-    icon: 'brain',
-    color: '#00A3E0',
-    description: 'Advanced understanding of generative AI, large language models, and their applications.',
-    skills: ['LLMs', 'Prompt Engineering', 'Fine-tuning', 'RAG'],
-    credentialUrl: 'https://www.deeplearning.ai/verify',
-    isPublished: true
-  },
-  {
-    _id: '4',
-    name: 'AI Agents in LangGraph',
-    issuer: 'DeepLearning.AI',
-    issueDate: '2024-04-05',
-    credentialId: 'DLAI-LANGGRAPH-2024',
-    category: 'ai-ml',
-    level: 'associate',
-    icon: 'zap',
-    color: '#00A3E0',
-    description: 'Building and deploying AI agents using LangGraph framework for complex workflows.',
-    skills: ['LangGraph', 'AI Agents', 'Workflow Automation', 'LangChain'],
-    credentialUrl: 'https://www.deeplearning.ai/verify',
-    isPublished: true
-  },
-  {
-    _id: '5',
-    name: 'Multi AI Agent Systems with crewAI',
-    issuer: 'DeepLearning.AI',
-    issueDate: '2024-05-15',
-    credentialId: 'DLAI-CREWAI-2024',
-    category: 'ai-ml',
-    level: 'associate',
-    icon: 'users',
-    color: '#00A3E0',
-    description: 'Designing and implementing multi-agent AI systems for collaborative problem solving.',
-    skills: ['crewAI', 'Multi-Agent Systems', 'Orchestration', 'Agent Communication'],
-    credentialUrl: 'https://www.deeplearning.ai/verify',
-    isPublished: true
-  },
-  {
-    _id: '6',
-    name: 'Mechatronics Engineering Diploma',
-    issuer: 'Institut Universitaire de Technologie',
-    issueDate: '2019-07-01',
-    credentialId: 'IUT-MECA-2019',
-    category: 'other',
-    level: 'professional',
-    icon: 'cog',
-    color: '#6B7280',
-    description: 'Comprehensive engineering degree covering mechanics, electronics, and computer science integration.',
-    skills: ['Robotics', 'Embedded Systems', 'CAD/CAM', 'Control Systems'],
-    credentialUrl: null,
-    isPublished: true
-  }
-];
-
 // Category mapping for filtering
 const categoryMapping = {
   'all': 'all',
@@ -161,7 +67,7 @@ const Certifications = () => {
   const [filter, setFilter] = useState('all');
   const { certifications: apiCertifications, loading } = useCertifications();
   
-  // Use API data if available, otherwise fallback
+  // Use API data only
   const certifications = useMemo(() => {
     if (apiCertifications?.length > 0) {
       // Map API data to display format
@@ -173,12 +79,7 @@ const Certifications = () => {
         verifyUrl: cert.credentialUrl
       }));
     }
-    // Add computed fields to fallback data
-    return fallbackCertifications.map(cert => ({
-      ...cert,
-      date: cert.issueDate ? new Date(cert.issueDate).getFullYear().toString() : 'N/A',
-      verifyUrl: cert.credentialUrl
-    }));
+    return [];
   }, [apiCertifications]);
 
   const categories = [
@@ -224,6 +125,57 @@ const Certifications = () => {
       transition: { duration: 0.2 }
     }
   };
+
+  // Empty state
+  if (!loading && certifications.length === 0) {
+    return (
+      <div className="min-h-screen pt-24 pb-16">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-16"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-6"
+            >
+              <Trophy className="w-5 h-5 text-primary" />
+              <span className="text-primary font-medium">Certifications & Credentials</span>
+            </motion.div>
+            
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6">
+              <span className="gradient-text">Professional</span>{' '}
+              <span className="text-white">Certifications</span>
+            </h1>
+          </motion.div>
+
+          {/* Empty State */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-center py-20"
+          >
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <Award className="text-primary" size={48} />
+            </div>
+            <h3 className="text-2xl font-bold text-white mb-4">
+              Certifications Coming Soon
+            </h3>
+            <p className="text-gray-400 max-w-lg mx-auto">
+              Certifications information is not yet available or the section is currently under maintenance. 
+              Please check back later!
+            </p>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen pt-24 pb-16">

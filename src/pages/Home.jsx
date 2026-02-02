@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { motion, useScroll, useTransform } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
@@ -9,6 +9,7 @@ import {
 } from 'lucide-react'
 import SkillsRadar from '../components/SkillsRadar'
 import CodeTag, { SectionTag } from '../components/CodeTag'
+import { useProjects } from '../hooks/useApi'
 import photoBen from '../assets/photo-ben.png'
 
 // Animation variants
@@ -361,33 +362,21 @@ const SkillsPreview = () => {
 // Featured Projects Section
 const FeaturedProjects = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
+  const { projects: apiProjects, loading } = useProjects('portfolio')
+  
+  // Get featured projects from API (first 3 projects marked as featured or just first 3)
+  const featuredProjects = useMemo(() => {
+    if (!apiProjects || apiProjects.length === 0) return []
+    const featured = apiProjects.filter(p => p.isFeatured)
+    return (featured.length > 0 ? featured : apiProjects).slice(0, 3).map(project => ({
+      ...project,
+      link: `/projects/${project.slug || project._id}`,
+      color: project.color || 'from-primary to-accent'
+    }))
+  }, [apiProjects])
 
-  const projects = [
-    {
-      title: 'AI Immigration Assistant',
-      description: 'AI-powered chatbot helping immigrants navigate Canadian settlement processes.',
-      tags: ['AI', 'LLM', 'React Native', 'FastAPI'],
-      image: '/projects/settledin.jpg',
-      link: '/projects/settledin',
-      color: 'from-blue-500 to-purple-600'
-    },
-    {
-      title: 'AR Indoor Navigation',
-      description: 'Augmented reality navigation system for airports and hospitals.',
-      tags: ['AR', 'Unity', 'Computer Vision', 'IoT'],
-      image: '/projects/ar-nav.jpg',
-      link: '/projects/ar-navigation',
-      color: 'from-green-500 to-teal-600'
-    },
-    {
-      title: 'Autonomous Robot Platform',
-      description: 'ROS-based mobile robot with SLAM and autonomous navigation.',
-      tags: ['ROS', 'Python', 'SLAM', 'Robotics'],
-      image: '/projects/robot.jpg',
-      link: '/projects/robot-platform',
-      color: 'from-orange-500 to-red-600'
-    }
-  ]
+  // Don't render if no projects
+  if (!loading && featuredProjects.length === 0) return null
 
   return (
     <section ref={ref} className="py-32 relative">
@@ -417,9 +406,9 @@ const FeaturedProjects = () => {
           variants={stagger}
           className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
-          {projects.map((project, index) => (
+          {featuredProjects.map((project, index) => (
             <motion.div
-              key={project.title}
+              key={project._id || project.title}
               variants={fadeInUp}
               whileHover={{ y: -10 }}
               className="card-glow group cursor-pointer"
@@ -429,7 +418,11 @@ const FeaturedProjects = () => {
                   {/* Image placeholder */}
                   <div className={`h-48 rounded-lg mb-6 bg-gradient-to-br ${project.color} 
                                   flex items-center justify-center overflow-hidden`}>
-                    <Layers className="text-white/30" size={64} />
+                    {project.thumbnail ? (
+                      <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
+                    ) : (
+                      <Layers className="text-white/30" size={64} />
+                    )}
                   </div>
                   
                   <h3 className="font-heading text-xl font-semibold text-white mb-3 
@@ -437,11 +430,11 @@ const FeaturedProjects = () => {
                     {project.title}
                   </h3>
                   <p className="text-gray-400 text-sm mb-4">
-                    {project.description}
+                    {project.shortDescription || project.description}
                   </p>
                   
                   <div className="flex flex-wrap gap-2">
-                    {project.tags.map((tag) => (
+                    {(project.technologies || []).slice(0, 4).map((tag) => (
                       <span 
                         key={tag}
                         className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary"

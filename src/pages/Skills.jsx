@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
 import { 
@@ -81,141 +81,9 @@ const categoryNames = {
   other: 'Other Skills'
 }
 
-// Fallback skill categories data
-const fallbackSkillCategories = [
-  {
-    key: 'frontend',
-    name: 'Frontend Development',
-    icon: Code2,
-    color: '#3B82F6',
-    level: 72,
-    description: 'Building responsive and interactive user interfaces',
-    skills: [
-      { name: 'React / React Native', level: 90 },
-      { name: 'TypeScript', level: 72 },
-      { name: 'Next.js', level: 68 },
-      { name: 'Tailwind CSS', level: 77 },
-      { name: 'Framer Motion', level: 64 },
-      { name: 'Vue.js', level: 60 },
-    ]
-  },
-  {
-    key: 'backend',
-    name: 'Backend Development',
-    icon: Server,
-    color: '#10B981',
-    level: 90,
-    description: 'Designing scalable server-side architectures',
-    skills: [
-      { name: 'Node.js / Express', level: 90 },
-      { name: 'Python / FastAPI', level: 88 },
-      { name: 'PostgreSQL / MongoDB', level: 85 },
-      { name: 'GraphQL', level: 75 },
-      { name: 'Laravel (PHP)', level: 80 },
-      { name: 'REST API Design', level: 92 },
-    ]
-  },
-  {
-    key: 'ai-ml',
-    name: 'AI & Machine Learning',
-    icon: Brain,
-    color: '#8B5CF6',
-    level: 88,
-    description: 'Building intelligent systems and AI agents',
-    skills: [
-      { name: 'LLM / RAG Systems', level: 90 },
-      { name: 'LangChain / Agents', level: 88 },
-      { name: 'TensorFlow / PyTorch', level: 80 },
-      { name: 'OpenAI / Claude APIs', level: 92 },
-      { name: 'Computer Vision', level: 75 },
-      { name: 'NLP', level: 82 },
-    ]
-  },
-  {
-    key: 'iot',
-    name: 'IoT Systems',
-    icon: Cpu,
-    color: '#F59E0B',
-    level: 82,
-    description: 'Connected devices and smart systems',
-    skills: [
-      { name: 'ESP32 / Arduino', level: 88 },
-      { name: 'MQTT / CoAP', level: 85 },
-      { name: 'Sensor Integration', level: 90 },
-      { name: 'AWS IoT', level: 80 },
-      { name: 'Edge Computing', level: 75 },
-      { name: 'LoRaWAN', level: 70 },
-    ]
-  },
-  {
-    key: 'robotics',
-    name: 'Robotics',
-    icon: Cog,
-    color: '#EF4444',
-    level: 60,
-    description: 'Autonomous systems and mechatronics',
-    skills: [
-      { name: 'ROS / ROS2', level: 62 },
-      { name: 'Motion Control', level: 64 },
-      { name: 'SLAM / Navigation', level: 58 },
-      { name: 'Kinematics', level: 60 },
-      { name: 'Sensor Fusion', level: 56 },
-      { name: 'PLC Programming', level: 54 },
-    ]
-  },
-  {
-    key: 'cad',
-    name: 'CAD & Design',
-    icon: PenTool,
-    color: '#EC4899',
-    level: 56,
-    description: 'Mechanical design and 3D modeling',
-    skills: [
-      { name: 'SolidWorks', level: 60 },
-      { name: 'AutoCAD', level: 56 },
-      { name: 'Fusion 360', level: 58 },
-      { name: '3D Printing', level: 64 },
-      { name: 'PCB Design', level: 54 },
-      { name: 'Technical Drawing', level: 60 },
-    ]
-  },
-  {
-    key: 'cloud',
-    name: 'Cloud & DevOps',
-    icon: Cloud,
-    color: '#06B6D4',
-    level: 85,
-    description: 'Cloud infrastructure and deployment',
-    skills: [
-      { name: 'AWS (Certified)', level: 88 },
-      { name: 'Docker', level: 85 },
-      { name: 'Kubernetes', level: 72 },
-      { name: 'CI/CD', level: 82 },
-      { name: 'Terraform', level: 75 },
-      { name: 'GCP', level: 78 },
-    ]
-  },
-  {
-    key: 'embedded',
-    name: 'Embedded Systems',
-    icon: CircuitBoard,
-    color: '#6366F1',
-    level: 78,
-    description: 'Low-level programming and firmware',
-    skills: [
-      { name: 'C / C++', level: 82 },
-      { name: 'STM32', level: 78 },
-      { name: 'FreeRTOS', level: 75 },
-      { name: 'Raspberry Pi', level: 88 },
-      { name: 'ARM Assembly', level: 65 },
-      { name: 'Firmware Dev', level: 76 },
-    ]
-  }
-]
-
 // Function to transform API skills to category format
 const transformSkillsToCategories = (apiSkills) => {
-  if (!apiSkills || apiSkills.length === 0) return fallbackSkillCategories
+  if (!apiSkills || apiSkills.length === 0) return []
   
   // Group skills by category
   const grouped = apiSkills.reduce((acc, skill) => {
@@ -296,9 +164,9 @@ const HeroSection = () => {
 // Radar Section
 const RadarSection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
-  const { skills: apiSkills } = useSkills()
+  const { skills: apiSkills, loading } = useSkills()
   
-  // Build radar skills from API or use defaults
+  // Build radar skills from API only
   const radarSkills = useMemo(() => {
     if (apiSkills?.length > 0) {
       const radarItems = apiSkills.filter(s => s.isRadarSkill)
@@ -309,39 +177,36 @@ const RadarSection = () => {
         }, {})
       }
     }
-    // Default radar skills
-    return {
-      frontend: 72,
-      backend: 90,
-      'ai-ml': 88,
-      iot: 82,
-      robotics: 60,
-      cad: 56,
-      cloud: 85,
-      embedded: 78,
-    }
+    return null
   }, [apiSkills])
+
+  // Don't render if no radar skills
+  if (!loading && !radarSkills) return null
 
   return (
     <section ref={ref} className="py-20">
       <div className="container-custom">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={inView ? { opacity: 1, scale: 1 } : {}}
-          transition={{ duration: 0.8 }}
-          className="flex justify-center mb-8"
-        >
-          <SkillsRadar skills={radarSkills} size={450} animated={inView} />
-        </motion.div>
-        
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 1 }}
-          className="text-center text-gray-500 text-sm"
-        >
-          Hover over the chart to see skill levels
-        </motion.p>
+        {radarSkills && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={inView ? { opacity: 1, scale: 1 } : {}}
+              transition={{ duration: 0.8 }}
+              className="flex justify-center mb-8"
+            >
+              <SkillsRadar skills={radarSkills} size={450} animated={inView} />
+            </motion.div>
+            
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={inView ? { opacity: 1 } : {}}
+              transition={{ delay: 1 }}
+              className="text-center text-gray-500 text-sm"
+            >
+              Hover over the chart to see skill levels
+            </motion.p>
+          </>
+        )}
       </div>
     </section>
   )
@@ -460,17 +325,50 @@ const SkillsGridSection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
   const { skills: apiSkills, loading } = useSkills()
   
-  // Transform API skills to category format, or use fallback
+  // Transform API skills to category format
   const skillCategories = useMemo(() => {
     return transformSkillsToCategories(apiSkills)
   }, [apiSkills])
   
-  const [selectedCategoryKey, setSelectedCategoryKey] = useState('frontend')
+  const [selectedCategoryKey, setSelectedCategoryKey] = useState(null)
+  
+  // Set initial selection when categories load
+  useEffect(() => {
+    if (skillCategories.length > 0 && !selectedCategoryKey) {
+      setSelectedCategoryKey(skillCategories[0].key)
+    }
+  }, [skillCategories, selectedCategoryKey])
   
   // Get selected category from key
   const selectedCategory = useMemo(() => {
     return skillCategories.find(cat => cat.key === selectedCategoryKey) || skillCategories[0]
   }, [skillCategories, selectedCategoryKey])
+
+  // Empty state
+  if (!loading && skillCategories.length === 0) {
+    return (
+      <section className="py-20">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20"
+          >
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <Code2 className="text-primary" size={48} />
+            </div>
+            <h3 className="font-heading text-2xl font-bold text-white mb-4">
+              Skills Coming Soon
+            </h3>
+            <p className="text-gray-400 max-w-lg mx-auto">
+              Skills information is not yet available or the section is currently under maintenance. 
+              Please check back later!
+            </p>
+          </motion.div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section ref={ref} className="py-20">
