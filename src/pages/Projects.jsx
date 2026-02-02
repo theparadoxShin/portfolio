@@ -16,106 +16,6 @@ const stagger = {
   visible: { transition: { staggerChildren: 0.1 } }
 }
 
-// Fallback project data (used when API is unavailable)
-const fallbackProjects = [
-  {
-    _id: '1',
-    title: 'SettleIn Canada',
-    description: 'AI-powered mobile app helping immigrants navigate Canadian settlement with CV generation, budget tracking, and service discovery.',
-    shortDescription: 'AI-powered immigrant settlement assistant',
-    category: 'mobile',
-    technologies: ['React Native', 'FastAPI', 'OpenAI', 'PostgreSQL', 'GCP'],
-    githubUrl: 'https://github.com/benparfait/settledin',
-    liveUrl: null,
-    featured: true,
-    status: 'in-progress'
-  },
-  {
-    _id: '2',
-    title: 'AR Indoor Navigation',
-    description: 'Augmented reality navigation system for complex indoor environments like airports, hospitals, and shopping centers.',
-    shortDescription: 'B2B AR navigation for enterprises',
-    category: 'mobile',
-    technologies: ['Unity', 'ARKit', 'ARCore', 'Node.js', 'AWS'],
-    githubUrl: null,
-    liveUrl: 'https://ar-nav-demo.daemoncraft.ca',
-    featured: true,
-    status: 'completed'
-  },
-  {
-    _id: '3',
-    title: 'ImmiShield Agent',
-    description: 'Financial document compliance analyzer for Canadian immigration using AI-powered document extraction.',
-    shortDescription: 'AI document compliance for immigration',
-    category: 'ai-agent',
-    technologies: ['Python', 'AWS Bedrock', 'LandingAI', 'FastAPI'],
-    githubUrl: 'https://github.com/benparfait/immishield',
-    liveUrl: null,
-    featured: true,
-    status: 'completed'
-  },
-  {
-    _id: '4',
-    title: 'Autonomous Robot Platform',
-    description: 'ROS-based mobile robot with SLAM capabilities and autonomous navigation for research applications.',
-    shortDescription: 'ROS2 robot for indoor navigation research',
-    category: 'robotics',
-    technologies: ['ROS2', 'Python', 'SLAM', 'LiDAR', 'Raspberry Pi'],
-    githubUrl: 'https://github.com/benparfait/ros-robot',
-    liveUrl: null,
-    featured: false,
-    status: 'completed'
-  },
-  {
-    _id: '5',
-    title: 'Smart Agriculture IoT',
-    description: 'IoT system for precision agriculture with soil monitoring, automated irrigation, and crop health analytics.',
-    shortDescription: 'IoT precision agriculture system',
-    category: 'iot',
-    technologies: ['ESP32', 'MQTT', 'Node.js', 'React', 'AWS IoT'],
-    githubUrl: 'https://github.com/benparfait/smart-agri',
-    liveUrl: null,
-    featured: false,
-    status: 'completed'
-  },
-  {
-    _id: '6',
-    title: 'AI Chatbot Framework',
-    description: 'Customizable chatbot framework with multi-LLM support, RAG capabilities, and enterprise integrations.',
-    shortDescription: 'Open-source multi-LLM chatbot framework',
-    category: 'chatbot',
-    technologies: ['Python', 'LangChain', 'FastAPI', 'ChromaDB', 'React'],
-    githubUrl: 'https://github.com/benparfait/chatbot-framework',
-    liveUrl: null,
-    featured: false,
-    status: 'completed'
-  },
-  {
-    _id: '7',
-    title: 'E-Commerce Platform',
-    description: 'Full-stack e-commerce solution with inventory management, payment processing, and analytics dashboard.',
-    shortDescription: 'Complete e-commerce with Stripe',
-    category: 'web',
-    technologies: ['Next.js', 'Node.js', 'PostgreSQL', 'Stripe', 'Tailwind'],
-    githubUrl: null,
-    liveUrl: 'https://ecommerce-demo.daemoncraft.ca',
-    featured: false,
-    status: 'completed'
-  },
-  {
-    _id: '8',
-    title: 'Fitness Tracker App',
-    description: 'Cross-platform mobile app for workout tracking, meal planning, and health analytics.',
-    shortDescription: 'Mobile fitness and health tracker',
-    category: 'mobile',
-    technologies: ['React Native', 'Expo', 'Firebase', 'Health APIs'],
-    githubUrl: 'https://github.com/benparfait/fitness-app',
-    liveUrl: null,
-    featured: false,
-    status: 'completed'
-  }
-]
-
 // Categories
 const categories = [
   { key: 'all', label: 'All Projects', icon: Layers },
@@ -125,6 +25,9 @@ const categories = [
   { key: 'robotics', label: 'Robotics', icon: Cog },
   { key: 'web', label: 'Web', icon: Globe },
   { key: 'mobile', label: 'Mobile', icon: Smartphone },
+  { key: 'embedded', label: 'Embedded', icon: Cpu },
+  { key: 'cad', label: 'CAD/3D', icon: Code2 },
+  { key: 'other', label: 'Other', icon: Layers },
 ]
 
 // Hero Section
@@ -278,16 +181,17 @@ const ProjectsGridSection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
   const [activeCategory, setActiveCategory] = useState('all')
   
-  // Fetch projects from API with fallback
-  const { projects: apiProjects, loading } = useProjects('portfolio')
-  const projects = apiProjects?.length > 0 ? apiProjects : fallbackProjects
+  // Fetch projects from API
+  const { projects, loading } = useProjects('portfolio')
 
   const filteredProjects = activeCategory === 'all' 
-    ? projects 
-    : projects.filter(p => p.category === activeCategory)
+    ? (projects || [])
+    : (projects || []).filter(p => p.category === activeCategory)
 
   // Get available categories from projects
-  const availableCategories = ['all', ...new Set(projects.map(p => p.category))]
+  const availableCategories = projects?.length > 0 
+    ? ['all', ...new Set(projects.map(p => p.category))]
+    : ['all']
   const displayCategories = categories.filter(c => availableCategories.includes(c.key))
 
   if (loading) {
@@ -295,6 +199,32 @@ const ProjectsGridSection = () => {
       <section className="py-20">
         <div className="container-custom flex justify-center">
           <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      </section>
+    )
+  }
+
+  // Empty state when no projects
+  if (!projects || projects.length === 0) {
+    return (
+      <section ref={ref} className="py-20">
+        <div className="container-custom">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-20"
+          >
+            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
+              <Layers className="text-primary" size={48} />
+            </div>
+            <h3 className="text-2xl font-heading font-semibold text-white mb-4">
+              Projects Coming Soon
+            </h3>
+            <p className="text-gray-400 max-w-md mx-auto">
+              Projects are not yet available or the section is currently under maintenance. 
+              Please check back later!
+            </p>
+          </motion.div>
         </div>
       </section>
     )
