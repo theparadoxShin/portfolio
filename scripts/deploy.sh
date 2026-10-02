@@ -6,7 +6,10 @@ set -euo pipefail
 
 SITE_STACK="${SITE_STACK:-daemon-craft-site-portfolio}"
 BACKEND_STACK="${BACKEND_STACK:-daemon-craft-backend-prod}"
-export AWS_PROFILE="${AWS_PROFILE:-ceo}"
+# Local runs use the "ceo" profile; CI (GitHub Actions + OIDC) provides credentials itself.
+if [[ -z "${GITHUB_ACTIONS:-}" && -z "${AWS_ACCESS_KEY_ID:-}" ]]; then
+  export AWS_PROFILE="${AWS_PROFILE:-ceo}"
+fi
 export AWS_REGION="${AWS_REGION:-ca-central-1}"
 export AWS_DEFAULT_REGION="$AWS_REGION"
 export AWS_PAGER=""
