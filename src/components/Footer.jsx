@@ -141,15 +141,23 @@ const Footer = () => {
             <p className="text-sm text-gray-400">
               &copy; {currentYear} {SHORT_NAME}. All rights reserved.
             </p>
-            <a
-              href={COMPANY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex min-h-[44px] items-center text-sm text-gray-400 transition-colors hover:text-primary"
-            >
-              {SHORT_NAME} at {COMPANY_NAME}
-              <span className="sr-only"> (opens in a new tab)</span>
-            </a>
+            <div className="flex flex-col items-center md:flex-row md:gap-6">
+              <Link
+                to="/privacy"
+                className="inline-flex min-h-[44px] items-center text-sm text-gray-400 transition-colors hover:text-primary"
+              >
+                Privacy Policy
+              </Link>
+              <a
+                href={COMPANY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex min-h-[44px] items-center text-sm text-gray-400 transition-colors hover:text-primary"
+              >
+                {SHORT_NAME} at {COMPANY_NAME}
+                <span className="sr-only"> (opens in a new tab)</span>
+              </a>
+            </div>
           </div>
         </div>
       </div>

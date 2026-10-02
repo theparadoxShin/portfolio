@@ -18,6 +18,7 @@ const pageLoaders = {
   experience: () => import('./pages/Experience'),
   certifications: () => import('./pages/Certifications'),
   contact: () => import('./pages/Contact'),
+  privacy: () => import('./pages/Privacy'),
   notFound: () => import('./pages/NotFound'),
 }
 
@@ -28,6 +29,7 @@ const ProjectDetail = lazy(pageLoaders.projectDetail)
 const Experience = lazy(pageLoaders.experience)
 const Certifications = lazy(pageLoaders.certifications)
 const Contact = lazy(pageLoaders.contact)
+const Privacy = lazy(pageLoaders.privacy)
 const NotFound = lazy(pageLoaders.notFound)
 
 function AnimatedRoutes() {
@@ -44,6 +46,7 @@ function AnimatedRoutes() {
         <Route path="/experience" element={<Experience />} />
         <Route path="/certifications" element={<Certifications />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

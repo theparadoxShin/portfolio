@@ -2,13 +2,13 @@
 import { Github, Linkedin, Twitter, Mail } from 'lucide-react';
 
 export const SITE_URL = 'https://parfaittedomtedom.com';
-export const COMPANY_URL = 'https://daemon-craft.com';
+export const COMPANY_URL = 'https://daemon-craft.ca';
 export const COMPANY_NAME = 'Daemon Craft Inc.';
 
 export const FULL_NAME = 'Parfait Ben-oni Tedom Tedom';
 export const SHORT_NAME = 'Parfait Tedom Tedom';
 
-export const EMAIL = 'contact@parfaittedomtedom.com';
+export const EMAIL = 'me@parfaittedomtedom.com';
 export const LOCATION = 'Edmonton, Alberta, Canada';
 export const RESUME_URL = '/resume.pdf';
 

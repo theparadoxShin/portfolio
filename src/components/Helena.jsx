@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X, Send, Bot, User, Sparkles, RefreshCw } from 'lucide-react'
 import { apiRequest } from '../lib/api'
@@ -383,6 +384,18 @@ function Helena() {
                   {remaining} characters left
                 </p>
               )}
+              <p className="mt-2 text-center text-[11px] leading-snug text-gray-400">
+                Don&apos;t share personal information in the chat — see{' '}
+                <Link
+                  to="/privacy"
+                  // Full-screen on phones: close it so the policy is visible.
+                  onClick={() => { if (isCompact) setIsOpen(false) }}
+                  className="whitespace-nowrap underline underline-offset-2 hover:text-primary"
+                >
+                  Privacy Policy
+                </Link>
+                .
+              </p>
             </form>
           </motion.div>
         )}

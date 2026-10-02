@@ -340,19 +340,25 @@ const ContactForm = () => {
               </span>
             </button>
 
-            {recaptchaConfigured && (
-              <p className="text-center text-xs leading-relaxed text-gray-400">
-                This site is protected by reCAPTCHA and the Google{' '}
-                <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
-                  Privacy Policy
-                </a>{' '}
-                and{' '}
-                <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
-                  Terms of Service
-                </a>{' '}
-                apply.
+            <div className="space-y-2 text-center text-xs leading-relaxed text-gray-400">
+              <p>
+                By sending this form you agree to the{' '}
+                <Link to="/privacy" className="whitespace-nowrap underline hover:text-primary">Privacy Policy</Link>.
               </p>
-            )}
+              {recaptchaConfigured && (
+                <p>
+                  This site is protected by reCAPTCHA and the Google{' '}
+                  <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
+                    Privacy Policy
+                  </a>{' '}
+                  and{' '}
+                  <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer" className="underline hover:text-primary">
+                    Terms of Service
+                  </a>{' '}
+                  apply.
+                </p>
+              )}
+            </div>
           </motion.form>
         )}
       </AnimatePresence>
