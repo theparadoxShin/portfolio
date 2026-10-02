@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Poppins:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -25,14 +23,80 @@
 
 html {
   scroll-behavior: smooth;
+  /* Keep anchored content clear of the fixed header */
+  scroll-padding-top: 6rem;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 body {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
   background-color: var(--dark);
   color: #f3f4f6;
   overflow-x: hidden;
   line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
+}
+
+img,
+svg,
+video {
+  max-width: 100%;
+}
+
+img {
+  height: auto;
+}
+
+/* ============================================
+   FOCUS STYLES (keyboard users)
+   ============================================ */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  outline-offset: 0;
+}
+
+/* Programmatic focus targets (main, headings, dialogs) need no ring */
+[tabindex="-1"]:focus,
+[tabindex="-1"]:focus-visible {
+  outline: none;
+}
+
+/* ============================================
+   SKIP LINK
+   ============================================ */
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 1100;
+  padding: 0.75rem 1.25rem;
+  border-radius: 0.5rem;
+  background: var(--primary);
+  color: var(--dark);
+  font-weight: 600;
+  transform: translateY(-200%);
+  transition: transform 0.2s ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid #fff;
+  outline-offset: 2px;
 }
 
 /* ============================================
@@ -64,26 +128,13 @@ body {
 }
 
 /* ============================================
-   RECAPTCHA BADGE IN FORM
+   RECAPTCHA
+   The floating badge is hidden; the contact form displays the
+   notice required by Google's terms instead. (Moving the badge
+   into the form broke reCAPTCHA after navigating away and back.)
    ============================================ */
-#recaptcha-container .grecaptcha-badge {
-  position: relative !important;
-  right: auto !important;
-  bottom: auto !important;
-  left: auto !important;
-  top: auto !important;
-  transform: none !important;
-  box-shadow: none !important;
-  display: inline-block !important;
-  width: 256px !important;
-  visibility: visible !important;
-  opacity: 1 !important;
-}
-
-/* Hide the default floating badge when container exists */
-body .grecaptcha-badge:not(#recaptcha-container .grecaptcha-badge) {
+.grecaptcha-badge {
   visibility: hidden !important;
-  opacity: 0 !important;
 }
 
 /* ============================================
@@ -137,6 +188,11 @@ body .grecaptcha-badge:not(#recaptcha-container .grecaptcha-badge) {
 @layer components {
   .glass {
     @apply bg-dark-light/60 backdrop-blur-xl border border-white/10;
+  }
+
+  /* Static glass panel (used by cards, stats, form panels) */
+  .glass-card {
+    @apply rounded-xl bg-dark-light/60 backdrop-blur-sm border border-white/10;
   }
 
   .glass-hover {
@@ -252,11 +308,11 @@ body .grecaptcha-badge:not(#recaptcha-container .grecaptcha-badge) {
    ============================================ */
 @layer components {
   .section-title {
-    @apply font-display text-4xl md:text-5xl font-bold tracking-tight text-white;
+    @apply font-display text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-white text-balance;
   }
 
   .section-subtitle {
-    @apply text-lg text-gray-400 max-w-2xl leading-relaxed;
+    @apply text-base sm:text-lg text-gray-300 max-w-2xl leading-relaxed;
   }
 
   .section-tag {
@@ -489,4 +545,45 @@ body .grecaptcha-badge:not(#recaptcha-container .grecaptcha-badge) {
   z-index: 1000;
   opacity: 0.02;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+}
+
+/* ============================================
+   HELENA LAUNCHER PULSE (plays a few times, then stops)
+   ============================================ */
+@keyframes helena-ping {
+  75%, 100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+.helena-ping {
+  animation: helena-ping 1.6s cubic-bezier(0, 0, 0.2, 1) 3;
+  animation-fill-mode: forwards;
+}
+
+/* ============================================
+   REDUCED MOTION
+   Framer Motion is handled by <MotionConfig reducedMotion="user">;
+   this covers CSS animations and transitions.
+   ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Loading spinners still need to read as "busy" */
+  .animate-spin {
+    animation-duration: 1.5s !important;
+    animation-iteration-count: infinite !important;
+  }
 }

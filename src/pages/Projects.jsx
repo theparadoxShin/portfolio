@@ -1,329 +1,297 @@
-import { useState } from 'react'
+import { forwardRef, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import { 
-  ExternalLink, Github, Layers, Filter,
-  Bot, Smartphone, Cpu, Cog, Globe, Code2
-} from 'lucide-react'
+import { ExternalLink, Github, Layers, ArrowRight } from 'lucide-react'
+import PageHero from '../components/PageHero'
+import { CardSkeletonGrid, EmptyState, ErrorState } from '../components/DataState'
 import { useProjects } from '../hooks/useApi'
+import { usePageMeta } from '../hooks/usePageMeta'
+import {
+  PROJECT_CATEGORIES, PROJECT_STATUS, asArray, getPrimaryImage, getProjectCategory, projectPath, safeUrl,
+} from '../lib/content'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 }
 
 const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } }
+  visible: { transition: { staggerChildren: 0.1 } },
 }
 
-// Categories
-const categories = [
-  { key: 'all', label: 'All Projects', icon: Layers },
-  { key: 'ai-agent', label: 'AI Agents', icon: Bot },
-  { key: 'chatbot', label: 'Chatbots', icon: Bot },
-  { key: 'iot', label: 'IoT', icon: Cpu },
-  { key: 'robotics', label: 'Robotics', icon: Cog },
-  { key: 'web', label: 'Web', icon: Globe },
-  { key: 'mobile', label: 'Mobile', icon: Smartphone },
-  { key: 'embedded', label: 'Embedded', icon: Cpu },
-  { key: 'cad', label: 'CAD/3D', icon: Code2 },
-  { key: 'other', label: 'Other', icon: Layers },
-]
-
-// Hero Section
-const HeroSection = () => {
-  return (
-    <section className="relative pt-32 pb-20 overflow-hidden">
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
-        <div className="absolute inset-0 grid-bg opacity-30" />
-      </div>
-
-      <div className="container-custom relative z-10">
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={stagger}
-          className="text-center"
-        >
-          <motion.p variants={fadeInUp} className="section-tag mb-4">
-            Portfolio
-          </motion.p>
-          <motion.h1 variants={fadeInUp} className="font-display text-5xl md:text-7xl font-bold tracking-tight mb-6">
-            <span className="text-white">My</span>{' '}
-            <span className="text-gradient">Projects</span>
-          </motion.h1>
-          <motion.p variants={fadeInUp} className="text-xl text-gray-400 max-w-3xl mx-auto">
-            A collection of work showcasing my expertise across AI, IoT, robotics, and software development.
-          </motion.p>
-        </motion.div>
-      </div>
-    </section>
-  )
-}
-
-// Project Card
-const ProjectCard = ({ project, index }) => {
-  const [isHovered, setIsHovered] = useState(false)
-  const colorMap = {
-    'ai-agent': 'from-orange-500 to-red-600',
-    'chatbot': 'from-purple-500 to-pink-600',
-    'iot': 'from-green-500 to-teal-600',
-    'robotics': 'from-red-500 to-orange-600',
-    'web': 'from-cyan-500 to-blue-600',
-    'mobile': 'from-blue-500 to-purple-600',
-    'embedded': 'from-yellow-500 to-orange-600',
-    'cad': 'from-pink-500 to-rose-600',
-  }
-  const color = colorMap[project.category] || 'from-gray-500 to-gray-600'
-  
-  // Get primary image or first image
-  const primaryImage = project.images?.find(img => img.isPrimary) || project.images?.[0]
+// Project Card — the title link covers the whole card; external links sit above it.
+const ProjectCard = forwardRef(({ project, index }, ref) => {
+  const category = getProjectCategory(project.category)
+  const image = getPrimaryImage(project)
+  const technologies = asArray(project.technologies)
+  const githubUrl = safeUrl(project.githubUrl)
+  const liveUrl = safeUrl(project.liveUrl)
+  const status = PROJECT_STATUS[project.status]
 
   return (
-    <motion.div
+    <motion.li
+      ref={ref}
+      layout
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -30 }}
-      transition={{ duration: 0.5, delay: index * 0.1 }}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      className="card-glow group"
+      exit={{ opacity: 0, y: -20 }}
+      transition={{ duration: 0.4, delay: Math.min(index, 6) * 0.06 }}
+      className="card-glow group h-full rounded-xl"
     >
-      <div className="card h-full flex flex-col">
-        {/* Image/Gradient Header */}
-        <div className={`relative h-48 rounded-lg mb-6 overflow-hidden ${!primaryImage?.url ? `bg-gradient-to-br ${color}` : ''}`}>
-          {primaryImage?.url ? (
-            <img 
-              src={primaryImage.url} 
-              alt={primaryImage.alt || project.title}
-              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+      <article className="card relative flex h-full flex-col">
+        <div
+          className={`relative mb-6 flex h-48 items-center justify-center overflow-hidden rounded-lg ${
+            image ? 'bg-dark' : `bg-gradient-to-br ${category.gradient}`
+          }`}
+        >
+          {image ? (
+            <img
+              src={image.url}
+              alt={image.alt || ''}
+              width="640"
+              height="384"
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className={`absolute inset-0 flex items-center justify-center bg-gradient-to-br ${color}`}>
-              <Layers className="text-white/20" size={64} />
-            </div>
-          )}
-          
-          {/* Featured badge */}
-          {project.featured && (
-            <div className="absolute top-3 left-3 px-2 py-1 rounded-full bg-white/20 
-                           backdrop-blur-sm text-white text-xs font-medium">
-              Featured
-            </div>
+            <category.icon className="text-white/40" size={56} aria-hidden="true" />
           )}
 
-          {/* Hover overlay with links */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: isHovered ? 1 : 0 }}
-            className="absolute inset-0 bg-dark/80 flex items-center justify-center gap-4"
-          >
-            {project.githubUrl && (
-              <a
-                href={project.githubUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center
-                          text-white hover:bg-white/20 transition-colors"
-              >
-                <Github size={20} />
-              </a>
-            )}
-            {project.liveUrl && (
-              <a
-                href={project.liveUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-12 h-12 rounded-full bg-white/10 flex items-center justify-center
-                          text-white hover:bg-white/20 transition-colors"
-              >
-                <ExternalLink size={20} />
-              </a>
-            )}
-          </motion.div>
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 flex flex-col">
-          <h3 className="font-heading text-xl font-semibold text-white mb-3 
-                        group-hover:text-primary transition-colors">
-            {project.title}
-          </h3>
-          <p className="text-gray-400 text-sm mb-4 flex-1">
-            {project.shortDescription || project.description}
-          </p>
-
-          {/* Tags */}
-          <div className="flex flex-wrap gap-2">
-            {(project.technologies || []).slice(0, 4).map((tag) => (
-              <span 
-                key={tag}
-                className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary"
-              >
-                {tag}
+          <div className="absolute left-3 top-3 flex flex-wrap gap-2">
+            {project.featured && (
+              <span className="rounded-full bg-dark/75 px-2.5 py-1 text-xs font-medium text-white backdrop-blur-sm">
+                Featured
               </span>
-            ))}
-            {(project.technologies || []).length > 4 && (
-              <span className="px-2 py-1 text-xs rounded-full bg-white/5 text-gray-500">
-                +{project.technologies.length - 4}
+            )}
+            {status && (
+              <span className="rounded-full bg-dark/75 px-2.5 py-1 text-xs font-medium text-gray-100 backdrop-blur-sm">
+                {status.label}
               </span>
             )}
           </div>
         </div>
-      </div>
-    </motion.div>
+
+        <div className="flex flex-1 flex-col">
+          <p className="mb-1 text-xs font-medium uppercase tracking-wider text-gray-400">{category.label}</p>
+          <h3 className="mb-3 font-heading text-xl font-semibold text-white transition-colors group-hover:text-primary">
+            <Link
+              to={projectPath(project)}
+              className="rounded after:absolute after:inset-0 after:rounded-xl after:content-['']"
+            >
+              {project.title}
+            </Link>
+          </h3>
+          {(project.shortDescription || project.description) && (
+            <p className="mb-4 line-clamp-3 text-sm text-gray-300">
+              {project.shortDescription || project.description}
+            </p>
+          )}
+
+          {technologies.length > 0 && (
+            <ul className="mb-5 flex flex-wrap gap-2" aria-label="Technologies">
+              {technologies.slice(0, 4).map((tag) => (
+                <li key={tag} className="rounded-full bg-primary/10 px-2.5 py-1 text-xs text-primary">
+                  {tag}
+                </li>
+              ))}
+              {technologies.length > 4 && (
+                <li className="rounded-full bg-white/5 px-2.5 py-1 text-xs text-gray-300">
+                  +{technologies.length - 4}
+                  <span className="sr-only"> more</span>
+                </li>
+              )}
+            </ul>
+          )}
+
+          <div className="mt-auto flex items-center justify-between gap-3 border-t border-white/5 pt-4">
+            <span className="inline-flex items-center gap-1 text-sm font-medium text-primary" aria-hidden="true">
+              View details
+              <ArrowRight size={14} className="transition-transform group-hover:translate-x-1" />
+            </span>
+            <div className="relative z-10 flex items-center gap-2">
+              {githubUrl && (
+                <a
+                  href={githubUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${project.title} source code on GitHub (opens in a new tab)`}
+                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 text-gray-300
+                             transition-colors hover:border-primary/50 hover:text-primary"
+                >
+                  <Github size={18} aria-hidden="true" />
+                </a>
+              )}
+              {liveUrl && (
+                <a
+                  href={liveUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={`${project.title} live demo (opens in a new tab)`}
+                  className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 text-gray-300
+                             transition-colors hover:border-primary/50 hover:text-primary"
+                >
+                  <ExternalLink size={18} aria-hidden="true" />
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </article>
+    </motion.li>
   )
-}
+})
+ProjectCard.displayName = 'ProjectCard'
 
 // Projects Grid Section
 const ProjectsGridSection = () => {
-  const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
   const [activeCategory, setActiveCategory] = useState('all')
-  
-  // Fetch projects from API
-  const { projects, loading } = useProjects('portfolio')
+  const { projects, loading, error, retry } = useProjects()
 
-  const filteredProjects = activeCategory === 'all' 
-    ? (projects || [])
-    : (projects || []).filter(p => p.category === activeCategory)
+  // Filters only for categories that actually have projects (known ones first).
+  const filters = useMemo(() => {
+    const present = [...new Set(projects.map((p) => p.category).filter(Boolean))]
+    const ordered = [
+      ...Object.keys(PROJECT_CATEGORIES).filter((key) => present.includes(key)),
+      ...present.filter((key) => !PROJECT_CATEGORIES[key]),
+    ]
+    return [
+      { key: 'all', label: 'All Projects', icon: Layers, count: projects.length },
+      ...ordered.map((key) => ({
+        key,
+        ...getProjectCategory(key),
+        count: projects.filter((p) => p.category === key).length,
+      })),
+    ]
+  }, [projects])
 
-  // Get available categories from projects
-  const availableCategories = projects?.length > 0 
-    ? ['all', ...new Set(projects.map(p => p.category))]
-    : ['all']
-  const displayCategories = categories.filter(c => availableCategories.includes(c.key))
+  const filteredProjects = activeCategory === 'all'
+    ? projects
+    : projects.filter((p) => p.category === activeCategory)
 
   if (loading) {
     return (
-      <section className="py-20">
-        <div className="container-custom flex justify-center">
-          <div className="w-12 h-12 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+      <section className="py-12 sm:py-20" aria-label="Projects">
+        <div className="container-custom">
+          <CardSkeletonGrid count={6} withMedia label="Loading projects…" cardClassName="h-[28rem]" />
         </div>
       </section>
     )
   }
 
-  // Empty state when no projects
-  if (!projects || projects.length === 0) {
+  if (error) {
     return (
-      <section ref={ref} className="py-20">
+      <section className="py-12 sm:py-20" aria-label="Projects">
         <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-20"
-          >
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-              <Layers className="text-primary" size={48} />
-            </div>
-            <h3 className="text-2xl font-heading font-semibold text-white mb-4">
-              Projects Coming Soon
-            </h3>
-            <p className="text-gray-400 max-w-md mx-auto">
-              Projects are not yet available or the section is currently under maintenance. 
-              Please check back later!
-            </p>
-          </motion.div>
+          <ErrorState title="Projects could not be loaded" message={error} onRetry={retry} />
+        </div>
+      </section>
+    )
+  }
+
+  if (projects.length === 0) {
+    return (
+      <section className="py-12 sm:py-20" aria-label="Projects">
+        <div className="container-custom">
+          <EmptyState icon={Layers} title="Projects Coming Soon">
+            Projects are not yet available or the section is currently under maintenance.
+            Please check back later!
+          </EmptyState>
         </div>
       </section>
     )
   }
 
   return (
-    <section ref={ref} className="py-20">
+    <section className="py-12 sm:py-20" aria-labelledby="projects-list-title">
       <div className="container-custom">
-        {/* Filter buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={inView ? { opacity: 1, y: 0 } : {}}
-          className="flex flex-wrap justify-center gap-3 mb-12"
-        >
-          {displayCategories.map((category) => (
-            <button
-              key={category.key}
-              onClick={() => setActiveCategory(category.key)}
-              className={`flex items-center space-x-2 px-4 py-2 rounded-lg text-sm font-medium
-                         transition-all duration-300 ${
-                activeCategory === category.key
-                  ? 'bg-primary text-dark'
-                  : 'bg-dark-light/50 text-gray-400 hover:text-white hover:bg-dark-light'
-              }`}
-            >
-              <category.icon size={16} />
-              <span>{category.label}</span>
-            </button>
-          ))}
-        </motion.div>
+        <h2 id="projects-list-title" className="sr-only">Project list</h2>
 
-        {/* Projects grid */}
-        <motion.div
-          layout
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-        >
+        {filters.length > 2 && (
+          <div role="group" aria-label="Filter projects by category" className="mb-10 flex flex-wrap justify-center gap-2 sm:mb-12 sm:gap-3">
+            {filters.map((filter) => {
+              const active = activeCategory === filter.key
+              return (
+                <button
+                  key={filter.key}
+                  type="button"
+                  onClick={() => setActiveCategory(filter.key)}
+                  aria-pressed={active}
+                  className={`inline-flex min-h-[44px] items-center gap-2 rounded-lg px-4 text-sm font-medium transition-colors duration-300 ${
+                    active
+                      ? 'bg-primary text-dark'
+                      : 'border border-white/10 bg-dark-light/50 text-gray-300 hover:bg-dark-light hover:text-white'
+                  }`}
+                >
+                  <filter.icon size={16} aria-hidden="true" />
+                  <span>{filter.label}</span>
+                  <span className={`text-xs ${active ? 'text-dark/70' : 'text-gray-400'}`}>({filter.count})</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        <p className="sr-only" aria-live="polite">
+          {`${filteredProjects.length} project${filteredProjects.length === 1 ? '' : 's'} shown`}
+        </p>
+
+        <ul className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8">
           <AnimatePresence mode="popLayout">
             {filteredProjects.map((project, index) => (
-              <ProjectCard key={project._id || project.id} project={project} index={index} />
+              <ProjectCard key={project.id || project.slug || project.title} project={project} index={index} />
             ))}
           </AnimatePresence>
-        </motion.div>
+        </ul>
 
-        {/* Empty state */}
         {filteredProjects.length === 0 && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            className="text-center py-20"
-          >
-            <Layers className="mx-auto text-gray-600 mb-4" size={48} />
-            <p className="text-gray-400">No projects in this category yet.</p>
-          </motion.div>
+          <div className="py-16 text-center">
+            <Layers className="mx-auto mb-4 text-gray-500" size={48} aria-hidden="true" />
+            <p className="text-gray-300">No projects in this category yet.</p>
+          </div>
         )}
       </div>
     </section>
   )
 }
 
+const stats = [
+  { value: '20+', label: 'Projects Completed' },
+  { value: '15+', label: 'Happy Clients' },
+  { value: '5+', label: 'Open Source' },
+  { value: '4', label: 'Hackathon Finals/Wins' },
+]
+
 // Stats Section
 const StatsSection = () => {
   const [ref, inView] = useInView({ threshold: 0.3, triggerOnce: true })
 
-  const stats = [
-    { value: '20+', label: 'Projects Completed' },
-    { value: '15+', label: 'Happy Clients' },
-    { value: '5+', label: 'Open Source' },
-    { value: '4', label: 'Hackathon Finals/Wins' },
-  ]
-
   return (
-    <section ref={ref} className="py-20 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-dark-light/30 to-transparent" />
-      
+    <section ref={ref} className="relative py-16 sm:py-20" aria-label="Key figures">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-dark-light/30 to-transparent" aria-hidden="true" />
+
       <div className="container-custom relative">
-        <motion.div
+        <motion.dl
           initial="hidden"
-          animate={inView ? "visible" : "hidden"}
+          animate={inView ? 'visible' : 'hidden'}
           variants={stagger}
-          className="grid grid-cols-2 md:grid-cols-4 gap-8"
+          className="grid grid-cols-2 gap-8 md:grid-cols-4"
         >
           {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              variants={fadeInUp}
-              className="text-center"
-            >
-              <motion.div
+            <motion.div key={stat.label} variants={fadeInUp} className="flex flex-col-reverse text-center">
+              <dt className="text-sm text-gray-300">{stat.label}</dt>
+              <motion.dd
                 initial={{ scale: 0 }}
                 animate={inView ? { scale: 1 } : {}}
                 transition={{ delay: index * 0.1, type: 'spring' }}
-                className="text-4xl md:text-5xl font-display font-bold text-gradient mb-2"
+                className="mb-2 font-display text-4xl font-bold text-gradient md:text-5xl"
               >
                 {stat.value}
-              </motion.div>
-              <p className="text-gray-400 text-sm">{stat.label}</p>
+              </motion.dd>
             </motion.div>
           ))}
-        </motion.div>
+        </motion.dl>
       </div>
     </section>
   )
@@ -331,13 +299,19 @@ const StatsSection = () => {
 
 // Main Projects Component
 const Projects = () => {
+  usePageMeta({
+    title: 'Projects',
+    description: 'Projects by Parfait Tedom Tedom across AI agents, IoT, robotics, web and mobile development.',
+  })
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <HeroSection />
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <PageHero
+        tag="Portfolio"
+        title="My"
+        highlight="Projects"
+        subtitle="A collection of work showcasing my expertise across AI, IoT, robotics, and software development."
+      />
       <ProjectsGridSection />
       <StatsSection />
     </motion.div>

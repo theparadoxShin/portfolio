@@ -1,268 +1,389 @@
-import { useState, useRef, useEffect } from 'react'
+import { Fragment, useCallback, useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { 
-  MessageCircle, X, Send, Bot, User, 
-  Loader2, Sparkles, Minimize2 
-} from 'lucide-react'
+import { X, Send, Bot, User, Sparkles, RefreshCw } from 'lucide-react'
+import { apiRequest } from '../lib/api'
+import { useBodyScrollLock, useDialog } from '../hooks/useDialog'
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
+const MAX_LENGTH = 1000
+const HISTORY_TURNS = 8
+const HISTORY_ITEM_MAX = 2000
 
-// Suggested questions for users
 const SUGGESTED_QUESTIONS = [
   "What are Parfait's main skills?",
-  "Tell me about his AI/ML projects",
-  "What certifications does he have?",
-  "What's his work experience?",
-  "How can I contact him?"
+  'Tell me about his AI/ML projects',
+  'What certifications does he have?',
 ]
 
+const GREETING = {
+  id: 'greeting',
+  role: 'assistant',
+  local: true,
+  content: "Hi! I'm Helena, Parfait's AI assistant. I can tell you all about his skills, projects, experience, and more. What would you like to know?",
+}
+
+let messageId = 0
+const nextId = () => {
+  messageId += 1
+  return `m${messageId}`
+}
+
+// ---------------------------------------------------------------- Safe rendering
+// Supports **bold**, line breaks (via white-space: pre-wrap) and bare http(s)
+// links. Everything is rendered as React text nodes: no HTML injection possible.
+const URL_PATTERN = /(https?:\/\/[^\s<>"'`]+[^\s<>"'`.,;:!?)\]])/g
+
+const linkify = (text, keyPrefix) => text.split(URL_PATTERN).map((part, i) => {
+  if (i % 2 === 1) {
+    return (
+      <a
+        key={`${keyPrefix}-l${i}`}
+        href={part}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="break-all text-primary underline underline-offset-2 hover:text-primary-light"
+      >
+        {part}
+      </a>
+    )
+  }
+  return part ? <Fragment key={`${keyPrefix}-t${i}`}>{part}</Fragment> : null
+})
+
+const renderRichText = (text) => String(text ?? '')
+  .split(/\*\*([\s\S]+?)\*\*/g)
+  .map((part, i) => (i % 2 === 1
+    ? <strong key={`b${i}`} className="font-semibold text-white">{linkify(part, `b${i}`)}</strong>
+    : <Fragment key={`p${i}`}>{linkify(part, `p${i}`)}</Fragment>))
+
+const errorMessageFor = (err) => {
+  if (err?.status === 0 || !err?.status) {
+    return err?.message?.includes('too long')
+      ? "I'm taking too long to answer right now. Please try again in a moment."
+      : "I'm having trouble connecting right now. Please check your connection and try again, or reach Parfait through the contact page."
+  }
+  return err.message
+}
+
+// ---------------------------------------------------------------- Component
 function Helena() {
   const [isOpen, setIsOpen] = useState(false)
-  const [isMinimized, setIsMinimized] = useState(false)
-  const [messages, setMessages] = useState([
-    {
-      role: 'assistant',
-      content: "Hi! I'm Helena, Parfait's AI assistant. I can tell you all about his skills, projects, experience, and more. What would you like to know?"
-    }
-  ])
+  const [messages, setMessages] = useState([GREETING])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const messagesEndRef = useRef(null)
-  const inputRef = useRef(null)
+  const [isCompact, setIsCompact] = useState(false)
 
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+  const dialogRef = useRef(null)
+  const logRef = useRef(null)
+  const inputRef = useRef(null)
+  const titleRef = useRef(null)
+  const launcherRef = useRef(null)
+  const messagesRef = useRef(messages)
+  const returnFocusRef = useRef(false)
+  messagesRef.current = messages
+
+  const open = () => {
+    setIsCompact(window.matchMedia('(max-width: 639px)').matches)
+    setIsOpen(true)
   }
 
-  useEffect(() => {
-    scrollToBottom()
-  }, [messages])
+  const close = useCallback(() => {
+    returnFocusRef.current = true
+    setIsOpen(false)
+  }, [])
 
+  // On touch devices, don't pop the keyboard over the conversation on open.
+  const prefersInputFocus = typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches
+
+  useBodyScrollLock(isOpen && isCompact)
+  useDialog(dialogRef, isOpen, {
+    onEscape: close,
+    initialFocusRef: prefersInputFocus ? inputRef : titleRef,
+    trap: isCompact,
+  })
+
+  // The launcher is re-mounted on close: give it focus back.
   useEffect(() => {
-    if (isOpen && !isMinimized) {
-      inputRef.current?.focus()
+    if (!isOpen && returnFocusRef.current) {
+      returnFocusRef.current = false
+      launcherRef.current?.focus({ preventScroll: true })
     }
-  }, [isOpen, isMinimized])
+  }, [isOpen])
 
-  const handleSend = async () => {
-    if (!input.trim() || isLoading) return
+  // Keep the newest message in view (scrolls the log only, never the page).
+  useEffect(() => {
+    const log = logRef.current
+    if (!log) return
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    log.scrollTo({ top: log.scrollHeight, behavior: reduce ? 'auto' : 'smooth' })
+  }, [messages, isLoading, isOpen])
 
-    const userMessage = input.trim()
+  const send = useCallback(async (rawText) => {
+    const text = String(rawText ?? '').trim().slice(0, MAX_LENGTH)
+    if (!text || isLoading) return
+
+    // Last turns of the conversation, excluding the local greeting and failed exchanges.
+    const history = messagesRef.current
+      .filter((m) => !m.local && !m.error && !m.failed)
+      .slice(-HISTORY_TURNS)
+      .map((m) => ({ role: m.role, content: String(m.content).slice(0, HISTORY_ITEM_MAX) }))
+
+    const userMessage = { id: nextId(), role: 'user', content: text }
+    setMessages((prev) => [...prev, userMessage])
     setInput('')
-    setMessages(prev => [...prev, { role: 'user', content: userMessage }])
     setIsLoading(true)
 
     try {
-      const response = await fetch(`${API_URL}/helena/chat`, {
+      const res = await apiRequest('/helena/chat', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ message: userMessage })
+        body: { message: text, history },
+        timeout: 30000,
       })
-
-      if (!response.ok) {
-        throw new Error('Failed to get response')
-      }
-
-      const data = await response.json()
-      setMessages(prev => [...prev, { role: 'assistant', content: data.response }])
-    } catch (error) {
-      console.error('Helena chat error:', error)
-      setMessages(prev => [...prev, { 
-        role: 'assistant', 
-        content: "I'm sorry, I'm having trouble connecting right now. Please try again later or contact Parfait directly via the contact form." 
-      }])
+      const reply = typeof res.response === 'string' && res.response.trim()
+        ? res.response.trim()
+        : "Sorry, I couldn't come up with an answer. Could you rephrase your question?"
+      setMessages((prev) => [...prev, { id: nextId(), role: 'assistant', content: reply }])
+    } catch (err) {
+      const canRetry = err?.status !== 400 && err?.status !== 429
+      setMessages((prev) => [
+        ...prev.map((m) => (m.id === userMessage.id ? { ...m, failed: true } : m)),
+        {
+          id: nextId(),
+          role: 'assistant',
+          error: true,
+          content: errorMessageFor(err),
+          retryText: canRetry ? text : null,
+          retryFor: userMessage.id,
+        },
+      ])
     } finally {
       setIsLoading(false)
     }
+  }, [isLoading])
+
+  const retry = (message) => {
+    setMessages((prev) => prev.filter((m) => m.id !== message.id && m.id !== message.retryFor))
+    send(message.retryText)
   }
 
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      handleSend()
-    }
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    send(input)
   }
 
-  const handleSuggestedQuestion = (question) => {
-    setInput(question)
-    inputRef.current?.focus()
-  }
+  const showSuggestions = messages.length === 1 && !isLoading
+  const remaining = MAX_LENGTH - input.length
 
   return (
     <>
-      {/* Chat Button */}
+      {/* Launcher */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
+            key="helena-launcher"
+            ref={launcherRef}
+            type="button"
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setIsOpen(true)}
-            className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-gradient-to-r from-primary to-secondary
-                       flex items-center justify-center shadow-glow cursor-pointer z-50
-                       hover:shadow-glow-lg transition-shadow duration-300"
+            whileHover={{ scale: 1.08 }}
+            whileTap={{ scale: 0.92 }}
+            onClick={open}
+            aria-label="Chat with Helena, Parfait's AI assistant"
+            aria-haspopup="dialog"
+            aria-expanded={false}
+            aria-controls="helena-chat"
+            className="fixed bottom-4 right-4 z-[60] flex h-14 w-14 items-center justify-center rounded-full
+                       bg-gradient-to-r from-primary to-secondary shadow-glow transition-shadow duration-300
+                       hover:shadow-glow-lg sm:bottom-6 sm:right-6"
+            style={{ marginBottom: 'env(safe-area-inset-bottom)' }}
           >
-            <Bot className="text-white" size={24} />
-            
-            {/* Pulse animation */}
-            <span className="absolute inset-0 rounded-full bg-primary/50 animate-ping" />
+            <Bot className="text-white" size={24} aria-hidden="true" />
+            <span className="helena-ping pointer-events-none absolute inset-0 rounded-full bg-primary/40" aria-hidden="true" />
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Chat Window */}
+      {/* Chat window */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: 20, scale: 0.95 }}
-            animate={{ 
-              opacity: 1, 
-              y: 0, 
-              scale: 1,
-              height: isMinimized ? 'auto' : '500px'
-            }}
-            exit={{ opacity: 0, y: 20, scale: 0.95 }}
+            key="helena-chat"
+            ref={dialogRef}
+            id="helena-chat"
+            role="dialog"
+            aria-modal={isCompact}
+            aria-labelledby="helena-title"
+            initial={{ opacity: 0, y: 20, scale: 0.97 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 20, scale: 0.97 }}
             transition={{ duration: 0.2 }}
-            className="fixed bottom-6 right-6 w-[380px] max-w-[calc(100vw-3rem)]
-                       bg-dark-lighter border border-white/10 rounded-2xl
-                       shadow-2xl overflow-hidden z-50 flex flex-col"
+            className="fixed inset-0 z-[65] flex flex-col overflow-hidden border-white/10 bg-dark-lighter shadow-2xl
+                       sm:inset-auto sm:bottom-6 sm:right-6 sm:h-[min(580px,calc(100dvh-3rem))] sm:w-[400px]
+                       sm:rounded-2xl sm:border"
           >
             {/* Header */}
-            <div className="bg-gradient-to-r from-primary/20 to-secondary/20 p-4
-                          border-b border-white/10 flex items-center justify-between flex-shrink-0">
-              <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-r from-primary to-secondary
-                              flex items-center justify-center">
+            <div
+              className="flex flex-shrink-0 items-center justify-between border-b border-white/10
+                         bg-gradient-to-r from-primary/20 to-secondary/20 px-4 py-3"
+              style={{ paddingTop: 'max(0.75rem, env(safe-area-inset-top))' }}
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-primary to-secondary" aria-hidden="true">
                   <Sparkles className="text-white" size={20} />
                 </div>
                 <div>
-                  <h3 className="text-white font-semibold">Helena</h3>
-                  <p className="text-gray-400 text-xs">AI Assistant • Online</p>
+                  <h2 id="helena-title" ref={titleRef} tabIndex={-1} className="font-semibold text-white">
+                    Helena
+                  </h2>
+                  <p className="flex items-center gap-1.5 text-xs text-gray-300">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" aria-hidden="true" />
+                    AI Assistant • Online
+                  </p>
                 </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <button
-                  onClick={() => setIsMinimized(!isMinimized)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <Minimize2 className="text-gray-400" size={18} />
-                </button>
-                <button
-                  onClick={() => setIsOpen(false)}
-                  className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
-                >
-                  <X className="text-gray-400" size={18} />
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={close}
+                aria-label="Close chat"
+                className="flex h-11 w-11 items-center justify-center rounded-lg text-gray-300 transition-colors hover:bg-white/10 hover:text-white"
+              >
+                <X size={20} aria-hidden="true" />
+              </button>
             </div>
 
-            {!isMinimized && (
-              <>
-                {/* Messages */}
-                <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                  {messages.map((message, index) => (
-                    <motion.div
-                      key={index}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                    >
-                      <div className={`flex items-start space-x-2 max-w-[85%] ${
-                        message.role === 'user' ? 'flex-row-reverse space-x-reverse' : ''
-                      }`}>
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
-                          message.role === 'user' 
-                            ? 'bg-primary/20' 
-                            : 'bg-gradient-to-r from-primary to-secondary'
-                        }`}>
-                          {message.role === 'user' 
-                            ? <User className="text-primary" size={16} />
-                            : <Bot className="text-white" size={16} />
-                          }
-                        </div>
-                        <div className={`rounded-2xl px-4 py-2.5 ${
-                          message.role === 'user'
-                            ? 'bg-primary text-white rounded-tr-sm'
-                            : 'bg-dark border border-white/10 text-gray-200 rounded-tl-sm'
-                        }`}>
-                          <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                            {message.content}
-                          </p>
-                        </div>
+            {/* Messages */}
+            <div
+              ref={logRef}
+              role="log"
+              aria-live="polite"
+              aria-relevant="additions"
+              aria-label="Conversation with Helena"
+              className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-4"
+            >
+              {messages.map((message) => {
+                const isUser = message.role === 'user'
+                return (
+                  <div key={message.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`flex max-w-[88%] items-start gap-2 ${isUser ? 'flex-row-reverse' : ''}`}>
+                      <div
+                        className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full ${
+                          isUser ? 'bg-primary/20' : 'bg-gradient-to-r from-primary to-secondary'
+                        }`}
+                        aria-hidden="true"
+                      >
+                        {isUser ? <User className="text-primary" size={16} /> : <Bot className="text-white" size={16} />}
                       </div>
-                    </motion.div>
-                  ))}
-                  
-                  {isLoading && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex items-start space-x-2"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-r from-primary to-secondary
-                                    flex items-center justify-center">
-                        <Bot className="text-white" size={16} />
+                      <div
+                        className={`min-w-0 rounded-2xl px-4 py-2.5 ${
+                          isUser
+                            ? 'rounded-tr-sm bg-primary text-dark'
+                            : message.error
+                              ? 'rounded-tl-sm border border-red-400/30 bg-red-500/10 text-red-100'
+                              : 'rounded-tl-sm border border-white/10 bg-dark text-gray-200'
+                        }`}
+                      >
+                        <span className="sr-only">{isUser ? 'You: ' : 'Helena: '}</span>
+                        <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">
+                          {isUser ? message.content : renderRichText(message.content)}
+                        </p>
+                        {message.error && message.retryText && (
+                          <button
+                            type="button"
+                            onClick={() => retry(message)}
+                            disabled={isLoading}
+                            className="mt-2 inline-flex min-h-[44px] items-center gap-1.5 rounded-lg border border-red-300/30 px-3
+                                       text-xs font-medium text-red-100 transition-colors hover:bg-red-500/20 disabled:opacity-50"
+                          >
+                            <RefreshCw size={14} aria-hidden="true" />
+                            Try again
+                          </button>
+                        )}
                       </div>
-                      <div className="bg-dark border border-white/10 rounded-2xl rounded-tl-sm px-4 py-3">
-                        <Loader2 className="text-primary animate-spin" size={18} />
-                      </div>
-                    </motion.div>
-                  )}
-                  
-                  <div ref={messagesEndRef} />
-                </div>
-
-                {/* Suggested Questions */}
-                {messages.length <= 2 && (
-                  <div className="px-4 pb-2 flex-shrink-0">
-                    <p className="text-gray-500 text-xs mb-2">Suggested questions:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {SUGGESTED_QUESTIONS.slice(0, 3).map((question, index) => (
-                        <button
-                          key={index}
-                          onClick={() => handleSuggestedQuestion(question)}
-                          className="text-xs px-3 py-1.5 rounded-full bg-white/5 text-gray-400
-                                   hover:bg-white/10 hover:text-white transition-colors"
-                        >
-                          {question}
-                        </button>
-                      ))}
                     </div>
                   </div>
-                )}
+                )
+              })}
 
-                {/* Input */}
-                <div className="p-4 border-t border-white/10 flex-shrink-0">
-                  <div className="flex items-center space-x-2">
-                    <input
-                      ref={inputRef}
-                      type="text"
-                      value={input}
-                      onChange={(e) => setInput(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Ask me anything about Parfait..."
-                      className="flex-1 bg-dark border border-white/10 rounded-xl px-4 py-2.5
-                               text-white placeholder-gray-500 text-sm
-                               focus:outline-none focus:border-primary/50 transition-colors"
-                    />
-                    <button
-                      onClick={handleSend}
-                      disabled={!input.trim() || isLoading}
-                      className="w-10 h-10 rounded-xl bg-gradient-to-r from-primary to-secondary
-                               flex items-center justify-center
-                               disabled:opacity-50 disabled:cursor-not-allowed
-                               hover:opacity-90 transition-opacity"
-                    >
-                      <Send className="text-white" size={18} />
-                    </button>
+              {isLoading && (
+                <div className="flex items-start gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-r from-primary to-secondary" aria-hidden="true">
+                    <Bot className="text-white" size={16} />
+                  </div>
+                  <div className="rounded-2xl rounded-tl-sm border border-white/10 bg-dark px-4 py-3.5">
+                    <span className="sr-only">Helena is typing…</span>
+                    <span className="flex gap-1" aria-hidden="true">
+                      {[0, 1, 2].map((i) => (
+                        <span
+                          key={i}
+                          className="h-2 w-2 animate-bounce rounded-full bg-primary/80"
+                          style={{ animationDelay: `${i * 0.15}s` }}
+                        />
+                      ))}
+                    </span>
                   </div>
                 </div>
-              </>
+              )}
+            </div>
+
+            {/* Suggested questions */}
+            {showSuggestions && (
+              <div className="flex-shrink-0 px-4 pb-2">
+                <p className="mb-2 text-xs text-gray-400" id="helena-suggestions">Suggested questions:</p>
+                <ul className="flex flex-wrap gap-2" aria-labelledby="helena-suggestions">
+                  {SUGGESTED_QUESTIONS.map((question) => (
+                    <li key={question}>
+                      <button
+                        type="button"
+                        onClick={() => send(question)}
+                        className="min-h-[44px] rounded-full bg-white/5 px-3 py-2 text-left text-xs text-gray-300
+                                   transition-colors hover:bg-white/10 hover:text-white"
+                      >
+                        {question}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
+
+            {/* Input */}
+            <form
+              onSubmit={handleSubmit}
+              className="flex-shrink-0 border-t border-white/10 p-3 sm:p-4"
+              style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+            >
+              <div className="flex items-center gap-2">
+                <label htmlFor="helena-input" className="sr-only">Ask Helena a question</label>
+                <input
+                  ref={inputRef}
+                  id="helena-input"
+                  type="text"
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  maxLength={MAX_LENGTH}
+                  autoComplete="off"
+                  enterKeyHint="send"
+                  aria-describedby={remaining < 150 ? 'helena-count' : undefined}
+                  placeholder="Ask me anything about Parfait..."
+                  className="min-h-[44px] min-w-0 flex-1 rounded-xl border border-white/10 bg-dark px-4 py-2.5 text-base text-white
+                             placeholder-gray-400 transition-colors focus:border-primary/60 sm:text-sm"
+                />
+                <button
+                  type="submit"
+                  disabled={!input.trim() || isLoading}
+                  aria-label="Send message"
+                  className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-r from-primary to-secondary
+                             transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  <Send className="text-white" size={18} aria-hidden="true" />
+                </button>
+              </div>
+              {remaining < 150 && (
+                <p id="helena-count" className="mt-1.5 text-right text-xs text-gray-400">
+                  {remaining} characters left
+                </p>
+              )}
+            </form>
           </motion.div>
         )}
       </AnimatePresence>
