@@ -10,11 +10,11 @@ let loadPromise = null;
 /** Loads the reCAPTCHA v3 script once per page load. */
 const loadRecaptcha = () => {
   if (!isValidKey) return Promise.resolve(false);
-  if (window.grecaptcha?.execute) return Promise.resolve(true);
+  if (window.grecaptcha?.enterprise?.execute) return Promise.resolve(true);
   if (loadPromise) return loadPromise;
 
   loadPromise = new Promise((resolve) => {
-    const onReady = () => window.grecaptcha.ready(() => resolve(true));
+    const onReady = () => window.grecaptcha.enterprise.ready(() => resolve(true));
     const existing = document.getElementById(SCRIPT_ID);
     if (existing) {
       existing.addEventListener('load', onReady, { once: true });
@@ -23,7 +23,7 @@ const loadRecaptcha = () => {
     }
     const script = document.createElement('script');
     script.id = SCRIPT_ID;
-    script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(RECAPTCHA_SITE_KEY)}`;
+    script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(RECAPTCHA_SITE_KEY)}`;
     script.async = true;
     script.defer = true;
     script.onload = onReady;
@@ -45,7 +45,7 @@ const loadRecaptcha = () => {
  * token is mandatory (it is in production) and returns a readable message.
  */
 export const useRecaptcha = () => {
-  const [isLoaded, setIsLoaded] = useState(!isValidKey || Boolean(window.grecaptcha?.execute));
+  const [isLoaded, setIsLoaded] = useState(!isValidKey || Boolean(window.grecaptcha?.enterprise?.execute));
 
   useEffect(() => {
     let active = true;
@@ -60,10 +60,10 @@ export const useRecaptcha = () => {
   const executeRecaptcha = useCallback(async (action = 'contact_form') => {
     if (!isValidKey) return null;
     const ready = await loadRecaptcha();
-    if (!ready || !window.grecaptcha?.execute) return null;
+    if (!ready || !window.grecaptcha?.enterprise?.execute) return null;
     try {
       return await Promise.race([
-        window.grecaptcha.execute(RECAPTCHA_SITE_KEY, { action }),
+        window.grecaptcha.enterprise.execute(RECAPTCHA_SITE_KEY, { action }),
         new Promise((resolve) => setTimeout(() => resolve(null), EXECUTE_TIMEOUT)),
       ]);
     } catch (err) {
