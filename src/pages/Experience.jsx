@@ -1,345 +1,306 @@
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import { 
-  Briefcase, Calendar, MapPin, ExternalLink,
-  ChevronRight, Building2
+import {
+  Briefcase, Calendar, MapPin, ExternalLink, ChevronRight, Building2, Clock,
 } from 'lucide-react'
+import PageHero from '../components/PageHero'
+import { CardSkeletonGrid, EmptyState, ErrorState } from '../components/DataState'
 import { useExperiences } from '../hooks/useApi'
+import { usePageMeta } from '../hooks/usePageMeta'
+import {
+  asArray, durationBetween, formatDateRange, humanize, safeUrl,
+} from '../lib/content'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 }
 
 const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } }
+  visible: { transition: { staggerChildren: 0.1 } },
 }
 
-// Experience Card Component
-// Format date
-const formatDate = (dateString) => {
-  if (!dateString) return 'Present'
-  const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
-}
+const DEFAULT_COLOR = '#00D9FF'
+const isHexColor = (c) => typeof c === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(c)
 
-// Calculate duration
-const calculateDuration = (startDate, endDate) => {
-  const start = new Date(startDate)
-  const end = endDate ? new Date(endDate) : new Date()
-  const months = (end.getFullYear() - start.getFullYear()) * 12 + (end.getMonth() - start.getMonth())
-  const years = Math.floor(months / 12)
-  const remainingMonths = months % 12
-  
-  if (years > 0 && remainingMonths > 0) {
-    return `${years}y ${remainingMonths}m`
-  } else if (years > 0) {
-    return `${years} year${years > 1 ? 's' : ''}`
-  } else {
-    return `${remainingMonths} month${remainingMonths > 1 ? 's' : ''}`
-  }
-}
-
-// Hero Section
-const HeroSection = () => {
-  return (
-    <section className="relative pt-32 pb-20 overflow-hidden">
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
-        <div className="absolute inset-0 grid-bg opacity-30" />
-      </div>
-
-      <div className="container-custom relative z-10">
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={stagger}
-          className="text-center"
-        >
-          <motion.p variants={fadeInUp} className="section-tag mb-4">
-            Career Journey
-          </motion.p>
-          <motion.h1 variants={fadeInUp} className="font-display text-5xl md:text-7xl font-bold tracking-tight mb-6">
-            <span className="text-white">Professional</span>{' '}
-            <span className="text-gradient">Experience</span>
-          </motion.h1>
-          <motion.p variants={fadeInUp} className="text-xl text-gray-400 max-w-3xl mx-auto">
-            From mechatronics engineering to full-stack development and AI - 
-            a journey of continuous growth and innovation.
-          </motion.p>
-        </motion.div>
-      </div>
-    </section>
-  )
+const formatLocation = (location) => {
+  if (!location) return null
+  const place = [location.city, location.country].filter(Boolean).join(', ')
+  if (location.remote) return place ? `${place} (Remote)` : 'Remote'
+  return place || null
 }
 
 // Experience Card
 const ExperienceCard = ({ experience, index }) => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
+  const color = isHexColor(experience.color) ? experience.color : DEFAULT_COLOR
+  const companyUrl = safeUrl(experience.companyUrl)
+  const logo = safeUrl(experience.companyLogo)
+  const location = formatLocation(experience.location)
+  const dates = formatDateRange(experience.startDate, experience.endDate, experience.isCurrent)
+  const duration = experience.duration
+    || durationBetween(experience.startDate, experience.isCurrent ? null : experience.endDate)
+  const achievements = asArray(experience.achievements)
+    .map((a) => (typeof a === 'string' ? { title: a } : a))
+    .filter((a) => a?.title || a?.description)
+  const responsibilities = asArray(experience.responsibilities).filter(Boolean)
+  const technologies = asArray(experience.technologies)
 
   return (
-    <motion.div
+    <motion.li
       ref={ref}
-      initial={{ opacity: 0, x: index % 2 === 0 ? -50 : 50 }}
-      animate={inView ? { opacity: 1, x: 0 } : {}}
-      transition={{ duration: 0.6, delay: index * 0.1 }}
+      initial={{ opacity: 0, y: 30 }}
+      animate={inView ? { opacity: 1, y: 0 } : {}}
+      transition={{ duration: 0.6, delay: Math.min(index, 3) * 0.08 }}
       className="relative"
     >
-      {/* Timeline connector */}
-      <div 
-        className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b hidden lg:block"
-        style={{ 
-          background: `linear-gradient(180deg, ${experience.color}40 0%, transparent 100%)`,
-          left: '-1px'
-        }}
+      {/* Timeline dot (desktop) */}
+      <span
+        className="absolute -left-2 top-8 hidden h-4 w-4 rounded-full ring-4 ring-dark lg:block"
+        style={{ backgroundColor: color }}
+        aria-hidden="true"
       />
 
-      {/* Timeline dot */}
-      <div 
-        className="absolute -left-2 top-0 w-4 h-4 rounded-full hidden lg:block"
-        style={{ backgroundColor: experience.color }}
-      >
-        <div 
-          className="absolute inset-0 rounded-full animate-ping opacity-30"
-          style={{ backgroundColor: experience.color }}
-        />
-      </div>
-
-      {/* Content card */}
-      <div className="card ml-0 lg:ml-8">
+      <article className="card lg:ml-10">
         {/* Header */}
-        <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
-          <div className="flex items-start gap-4">
-            {/* Company Logo */}
-            {experience.companyLogo ? (
-              <div 
-                className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 border border-white/10"
-                style={{ backgroundColor: experience.color + '20' }}
-              >
-                <img 
-                  src={experience.companyLogo} 
-                  alt={experience.company}
-                  className="w-full h-full object-contain p-1"
-                />
+        <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="flex min-w-0 items-start gap-4">
+            <div
+              className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-white/10"
+              style={{ backgroundColor: `${color}20` }}
+              aria-hidden="true"
+            >
+              {logo ? (
+                <img src={logo} alt="" width="56" height="56" loading="lazy" decoding="async" className="h-full w-full object-contain p-1" />
+              ) : (
+                <Building2 size={24} style={{ color }} />
+              )}
+            </div>
+
+            <div className="min-w-0">
+              <div className="mb-2 flex flex-wrap items-center gap-2">
+                {experience.isCurrent && (
+                  <span className="rounded-full bg-green-500/20 px-2 py-0.5 text-xs font-medium text-green-300">Current</span>
+                )}
+                {experience.type && <span className="text-sm text-gray-400">{humanize(experience.type)}</span>}
               </div>
-            ) : (
-              <div 
-                className="w-14 h-14 rounded-xl flex-shrink-0 flex items-center justify-center"
-                style={{ backgroundColor: experience.color + '20' }}
-              >
-                <Building2 size={24} style={{ color: experience.color }} />
+              <h3 className="mb-1 text-balance font-heading text-xl font-bold text-white sm:text-2xl">{experience.position}</h3>
+              {experience.company && (
+                <p className="font-medium">
+                  {companyUrl ? (
+                    <a
+                      href={companyUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-2 text-primary hover:underline"
+                    >
+                      <Building2 size={16} aria-hidden="true" />
+                      {experience.company}
+                      <ExternalLink size={12} className="opacity-70" aria-hidden="true" />
+                      <span className="sr-only"> (opens in a new tab)</span>
+                    </a>
+                  ) : (
+                    <span className="inline-flex items-center gap-2 text-primary">
+                      <Building2 size={16} aria-hidden="true" />
+                      {experience.company}
+                    </span>
+                  )}
+                </p>
+              )}
+            </div>
+          </div>
+
+          <dl className="flex shrink-0 flex-col gap-1 text-sm sm:items-end sm:text-right">
+            {dates && (
+              <div className="text-gray-300">
+                <dt className="sr-only">Dates</dt>
+                <dd className="flex items-center gap-2">
+                  <Calendar size={14} className="shrink-0" aria-hidden="true" />
+                  {dates}
+                </dd>
               </div>
             )}
-            
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                {experience.isCurrent && (
-                  <span className="px-2 py-0.5 text-xs rounded-full bg-green-500/20 text-green-400 font-medium">
-                    Current
-                  </span>
-                )}
-                <span className="text-gray-500 text-sm capitalize">{experience.type}</span>
+            {location && (
+              <div className="text-gray-400">
+                <dt className="sr-only">Location</dt>
+                <dd className="flex items-center gap-2">
+                  <MapPin size={14} className="shrink-0" aria-hidden="true" />
+                  {location}
+                </dd>
               </div>
-              <h3 className="font-heading text-2xl font-bold text-white mb-1">
-                {experience.position}
-              </h3>
-              <div className="flex items-center text-primary font-medium">
-                {experience.companyUrl ? (
-                  <a 
-                    href={experience.companyUrl} 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="flex items-center hover:underline"
-                    style={{ color: experience.color }}
-                  >
-                    <Building2 size={16} className="mr-2" />
-                    {experience.company}
-                    <ExternalLink size={12} className="ml-1 opacity-60" />
-                  </a>
-                ) : (
-                  <>
-                    <Building2 size={16} className="mr-2" />
-                    {experience.company}
-                  </>
-                )}
+            )}
+            {duration && (
+              <div className="font-mono text-primary">
+                <dt className="sr-only">Duration</dt>
+                <dd className="flex items-center gap-2">
+                  <Clock size={14} className="shrink-0" aria-hidden="true" />
+                  {duration}
+                </dd>
               </div>
-            </div>
-          </div>
-          
-          <div className="text-right">
-            <div className="flex items-center text-gray-400 text-sm mb-1">
-              <Calendar size={14} className="mr-2" />
-              {formatDate(experience.startDate)} - {formatDate(experience.endDate)}
-            </div>
-            <div className="flex items-center text-gray-500 text-sm">
-              <MapPin size={14} className="mr-2" />
-              {experience.location?.city}, {experience.location?.country}
-              {experience.location?.remote && ' (Remote)'}
-            </div>
-            <div className="text-primary text-sm mt-1 font-mono">
-              {calculateDuration(experience.startDate, experience.endDate)}
-            </div>
-          </div>
+            )}
+          </dl>
         </div>
 
-        {/* Description */}
-        <p className="text-gray-400 mb-6">
-          {experience.description}
-        </p>
+        {experience.description && (
+          <p className="mb-6 max-w-prose text-gray-300">{experience.description}</p>
+        )}
 
-        {/* Achievements */}
-        <div className="mb-6">
-          <h4 className="text-white font-medium mb-3 flex items-center">
-            <ChevronRight className="text-primary mr-1" size={16} />
-            Key Achievements
-          </h4>
-          <ul className="space-y-2">
-            {experience.achievements?.map((achievement, idx) => (
-              <li key={idx} className="flex items-start text-gray-400 text-sm">
-                <span 
-                  className="w-1.5 h-1.5 rounded-full mt-2 mr-3 flex-shrink-0"
-                  style={{ backgroundColor: experience.color }}
-                />
-                {typeof achievement === 'object' ? achievement.title : achievement}
+        {(achievements.length > 0 || responsibilities.length > 0) && (
+          <div className="mb-6">
+            <h4 className="mb-3 flex items-center font-medium text-white">
+              <ChevronRight className="mr-1 text-primary" size={16} aria-hidden="true" />
+              {achievements.length > 0 ? 'Key Achievements' : 'Responsibilities'}
+            </h4>
+            <ul className="space-y-2">
+              {(achievements.length > 0 ? achievements : responsibilities.map((r) => ({ title: r }))).map((item, idx) => (
+                <li key={idx} className="flex items-start text-sm text-gray-300">
+                  <span className="mr-3 mt-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: color }} aria-hidden="true" />
+                  <span>
+                    {item.title}
+                    {item.metric && <span className="ml-1 font-medium text-primary">({item.metric})</span>}
+                    {item.description && <span className="block text-gray-400">{item.description}</span>}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {technologies.length > 0 && (
+          <ul className="flex flex-wrap gap-2" aria-label="Technologies">
+            {technologies.map((tech) => (
+              <li key={tech} className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-gray-200">
+                {tech}
               </li>
             ))}
           </ul>
-        </div>
-
-        {/* Technologies */}
-        <div className="flex flex-wrap gap-2">
-          {experience.technologies.map((tech) => (
-            <span 
-              key={tech}
-              className="px-3 py-1 text-xs rounded-full bg-white/5 text-gray-300 
-                        border border-white/10"
-            >
-              {tech}
-            </span>
-          ))}
-        </div>
-      </div>
-    </motion.div>
+        )}
+      </article>
+    </motion.li>
   )
 }
 
 // Timeline Section
-const TimelineSection = () => {
-  const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
-  const { experiences: apiExperiences, loading } = useExperiences()
-  
-  // Use API data
-  const experiences = apiExperiences || []
-
-  // Empty state
-  if (!loading && experiences.length === 0) {
+const TimelineSection = ({ experiences, loading, error, retry }) => {
+  if (loading) {
     return (
-      <section ref={ref} className="py-20">
+      <section className="py-12 sm:py-20" aria-label="Work experience">
+        <div className="container-custom mx-auto max-w-4xl">
+          <CardSkeletonGrid count={2} label="Loading experience…" className="space-y-8" cardClassName="h-72" />
+        </div>
+      </section>
+    )
+  }
+
+  if (error) {
+    return (
+      <section className="py-12 sm:py-20" aria-label="Work experience">
         <div className="container-custom">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center py-20"
-          >
-            <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-primary/10 flex items-center justify-center">
-              <Briefcase className="text-primary" size={48} />
-            </div>
-            <h3 className="text-2xl font-heading font-semibold text-white mb-4">
-              Experience Coming Soon
-            </h3>
-            <p className="text-gray-400 max-w-md mx-auto">
-              Work experience is not yet available or the section is currently under maintenance. 
-              Please check back later!
-            </p>
-          </motion.div>
+          <ErrorState title="Experience could not be loaded" message={error} onRetry={retry} />
+        </div>
+      </section>
+    )
+  }
+
+  if (experiences.length === 0) {
+    return (
+      <section className="py-12 sm:py-20" aria-label="Work experience">
+        <div className="container-custom">
+          <EmptyState icon={Briefcase} title="Experience Coming Soon">
+            Work experience is not yet available or the section is currently under maintenance.
+            Please check back later!
+          </EmptyState>
         </div>
       </section>
     )
   }
 
   return (
-    <section ref={ref} className="py-20">
+    <section className="py-12 sm:py-20" aria-labelledby="timeline-title">
       <div className="container-custom">
-        <div className="max-w-4xl mx-auto relative">
-          {/* Main timeline line */}
-          <div className="absolute left-0 top-0 bottom-0 w-px bg-gradient-to-b from-primary via-secondary to-accent hidden lg:block" />
-
-          {/* Loading state */}
-          {loading && (
-            <div className="text-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary mx-auto" />
-            </div>
-          )}
-
-          {/* Experience cards */}
-          <div className="space-y-12">
+        <h2 id="timeline-title" className="sr-only">Work experience timeline</h2>
+        <div className="relative mx-auto max-w-4xl">
+          <div
+            className="absolute bottom-0 left-0 top-0 hidden w-px bg-gradient-to-b from-primary via-secondary to-accent lg:block"
+            aria-hidden="true"
+          />
+          <ol className="space-y-8 sm:space-y-12">
             {experiences.map((experience, index) => (
-              <ExperienceCard 
-                key={experience._id || experience.id} 
-                experience={experience} 
-                index={index}
-              />
+              <ExperienceCard key={experience.id || `${experience.company}-${index}`} experience={experience} index={index} />
             ))}
-          </div>
+          </ol>
         </div>
       </div>
     </section>
   )
 }
 
-// Summary Stats
-const SummarySection = () => {
-  const [ref, inView] = useInView({ threshold: 0.3, triggerOnce: true })
-  const { experiences: apiExperiences } = useExperiences()
-  
-  // Use API data
-  const experiences = apiExperiences || []
+/** Total time worked, without double-counting overlapping roles. */
+const yearsOfExperience = (experiences) => {
+  const ranges = experiences
+    .map((e) => {
+      const start = Date.parse(e.startDate)
+      const end = e.isCurrent || !e.endDate ? Date.now() : Date.parse(e.endDate)
+      return Number.isNaN(start) || Number.isNaN(end) || end < start ? null : [start, end]
+    })
+    .filter(Boolean)
+    .sort((a, b) => a[0] - b[0])
 
-  // Don't show stats if no experiences
+  let total = 0
+  let current = null
+  ranges.forEach(([s, e]) => {
+    if (!current || s > current[1]) {
+      if (current) total += current[1] - current[0]
+      current = [s, e]
+    } else {
+      current[1] = Math.max(current[1], e)
+    }
+  })
+  if (current) total += current[1] - current[0]
+  return Math.floor(total / (1000 * 60 * 60 * 24 * 365.25))
+}
+
+// Summary Stats
+const SummarySection = ({ experiences }) => {
+  const [ref, inView] = useInView({ threshold: 0.3, triggerOnce: true })
+
   if (experiences.length === 0) return null
 
-  const totalYears = experiences.reduce((acc, exp) => {
-    const start = new Date(exp.startDate)
-    const end = exp.endDate ? new Date(exp.endDate) : new Date()
-    return acc + (end - start) / (1000 * 60 * 60 * 24 * 365)
-  }, 0)
+  const years = yearsOfExperience(experiences)
+  const companies = new Set(experiences.map((e) => e.company).filter(Boolean)).size
 
   const stats = [
-    { value: `${Math.round(totalYears)}+`, label: 'Years Experience' },
-    { value: `${experiences.length}`, label: 'Companies' },
+    years > 0 && { value: `${years}+`, label: 'Years Experience' },
+    { value: `${companies || experiences.length}`, label: companies === 1 ? 'Company' : 'Companies' },
     { value: '15+', label: 'Projects Delivered' },
     { value: '3', label: 'Countries' },
-  ]
+  ].filter(Boolean)
 
   return (
-    <section ref={ref} className="py-20 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-dark-light/30 to-transparent" />
-      
+    <section ref={ref} className="relative py-16 sm:py-20" aria-label="Experience summary">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-dark-light/30 to-transparent" aria-hidden="true" />
+
       <div className="container-custom relative">
-        <motion.div
+        <motion.dl
           initial="hidden"
-          animate={inView ? "visible" : "hidden"}
+          animate={inView ? 'visible' : 'hidden'}
           variants={stagger}
-          className="grid grid-cols-2 md:grid-cols-4 gap-8"
+          className="grid grid-cols-2 gap-8 md:grid-cols-4"
         >
           {stats.map((stat, index) => (
-            <motion.div
-              key={stat.label}
-              variants={fadeInUp}
-              className="text-center"
-            >
-              <motion.div
+            <motion.div key={stat.label} variants={fadeInUp} className="flex flex-col-reverse text-center">
+              <dt className="text-sm text-gray-300">{stat.label}</dt>
+              <motion.dd
                 initial={{ scale: 0 }}
                 animate={inView ? { scale: 1 } : {}}
                 transition={{ delay: index * 0.1, type: 'spring' }}
-                className="text-4xl md:text-5xl font-display font-bold text-gradient mb-2"
+                className="mb-2 font-display text-4xl font-bold text-gradient md:text-5xl"
               >
                 {stat.value}
-              </motion.div>
-              <p className="text-gray-400 text-sm">{stat.label}</p>
+              </motion.dd>
             </motion.div>
           ))}
-        </motion.div>
+        </motion.dl>
       </div>
     </section>
   )
@@ -347,15 +308,22 @@ const SummarySection = () => {
 
 // Main Experience Component
 const Experience = () => {
+  usePageMeta({
+    title: 'Experience',
+    description: 'Professional experience of Parfait Tedom Tedom: full-stack development, AI, IoT and engineering roles.',
+  })
+  const { experiences, loading, error, retry } = useExperiences()
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <HeroSection />
-      <TimelineSection />
-      <SummarySection />
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <PageHero
+        tag="Career Journey"
+        title="Professional"
+        highlight="Experience"
+        subtitle="From mechatronics engineering to full-stack development and AI - a journey of continuous growth and innovation."
+      />
+      <TimelineSection experiences={experiences} loading={loading} error={error} retry={retry} />
+      {!loading && !error && <SummarySection experiences={experiences} />}
     </motion.div>
   )
 }

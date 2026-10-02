@@ -1,88 +1,62 @@
 import { motion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import { 
-  MapPin, Calendar, Award, BookOpen, 
-  Rocket, Heart, Code2, Cpu, Target, Users
+import {
+  MapPin, Calendar, Award, BookOpen,
+  Rocket, Heart, Code2, Cpu, Target, Users,
 } from 'lucide-react'
-import photoBen from '../assets/photo-ben.png'
+import PageHero from '../components/PageHero'
+import { usePageMeta } from '../hooks/usePageMeta'
+import { FULL_NAME, COMPANY_NAME, COMPANY_URL } from '../data/profile'
+import photoBen from '../assets/photo-ben.webp'
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 }
 
 const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } }
+  visible: { transition: { staggerChildren: 0.1 } },
 }
 
-// Hero Section
-const HeroSection = () => {
-  return (
-    <section className="relative pt-32 pb-20 overflow-hidden">
-      <div className="absolute inset-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-primary/5 to-transparent" />
-        <div className="absolute inset-0 grid-bg opacity-30" />
-      </div>
-
-      <div className="container-custom relative z-10">
-        <motion.div
-          initial="hidden"
-          animate="visible"
-          variants={stagger}
-          className="text-center"
-        >
-          <motion.p variants={fadeInUp} className="section-tag mb-4">
-            About Me
-          </motion.p>
-          <motion.h1 variants={fadeInUp} className="font-display text-5xl md:text-7xl font-bold tracking-tight mb-6">
-            <span className="text-white">The Story</span>{' '}
-            <span className="text-gradient">Behind The Code</span>
-          </motion.h1>
-          <motion.p variants={fadeInUp} className="text-xl text-gray-400 max-w-3xl mx-auto">
-            From Cameroon to Canada, a journey driven by passion for technology 
-            and the dream of building intelligent systems.
-          </motion.p>
-        </motion.div>
-      </div>
-    </section>
-  )
-}
+const quickFacts = [
+  { icon: MapPin, label: 'Location', value: 'Edmonton, AB' },
+  { icon: Calendar, label: 'Experience', value: '6+ Years' },
+  { icon: BookOpen, label: 'Education', value: 'Mechatronics Eng.' },
+  { icon: Rocket, label: 'Company', value: COMPANY_NAME },
+]
 
 // Bio Section
 const BioSection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
 
   return (
-    <section ref={ref} className="py-20">
+    <section ref={ref} className="py-12 sm:py-20" aria-label="Biography">
       <div className="container-custom">
         <motion.div
           initial="hidden"
-          animate={inView ? "visible" : "hidden"}
+          animate={inView ? 'visible' : 'hidden'}
           variants={stagger}
-          className="grid lg:grid-cols-2 gap-16 items-center"
+          className="grid items-center gap-14 lg:grid-cols-2 lg:gap-16"
         >
           {/* Photo */}
-          <motion.div variants={fadeInUp} className="relative">
-            <div className="relative max-w-md mx-auto">
-              {/* Background decoration */}
-              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl blur-xl" />
-              
-              {/* Image container */}
-              <div className="relative rounded-2xl overflow-hidden border border-white/10">
-                <img 
-                  src={photoBen} 
-                  alt="Parfait Tedom Tedom" 
-                  className="w-full aspect-[4/5] object-cover"
+          <motion.div variants={fadeInUp} className="relative px-3 sm:px-4">
+            <div className="relative mx-auto max-w-sm sm:max-w-md">
+              <div className="absolute -inset-4 rounded-2xl bg-gradient-to-r from-primary/20 to-secondary/20 blur-xl" aria-hidden="true" />
+
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-dark-light">
+                <img
+                  src={photoBen}
+                  alt={`Portrait of ${FULL_NAME}`}
+                  width="600"
+                  height="800"
+                  loading="lazy"
+                  decoding="async"
+                  className="aspect-[4/5] w-full object-cover object-top"
                 />
-                
-                {/* Overlay info */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-dark to-transparent">
-                  <h3 className="font-display text-2xl font-bold text-white mb-1">
-                    Parfait Ben-oni Tedom Tedom
-                  </h3>
-                  <p className="text-primary font-mono text-sm">
-                    Full Stack Engineer
-                  </p>
+
+                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-dark via-dark/80 to-transparent p-5 pt-12 sm:p-6 sm:pt-16">
+                  <p className="mb-1 font-display text-xl font-bold text-white sm:text-2xl">{FULL_NAME}</p>
+                  <p className="font-mono text-sm text-primary">Full Stack Engineer</p>
                 </div>
               </div>
 
@@ -90,10 +64,10 @@ const BioSection = () => {
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 3, repeat: Infinity }}
-                className="absolute -top-4 -right-4 px-4 py-2 rounded-lg glass"
+                className="glass absolute -right-3 -top-4 rounded-lg px-4 py-2 sm:-right-4"
               >
-                <div className="flex items-center space-x-2">
-                  <MapPin className="text-primary" size={16} />
+                <div className="flex items-center gap-2">
+                  <MapPin className="text-primary" size={16} aria-hidden="true" />
                   <span className="text-sm text-white">Edmonton, CA</span>
                 </div>
               </motion.div>
@@ -101,11 +75,11 @@ const BioSection = () => {
               <motion.div
                 animate={{ y: [0, 10, 0] }}
                 transition={{ duration: 4, repeat: Infinity }}
-                className="absolute -bottom-4 -left-4 px-4 py-2 rounded-lg glass"
+                className="glass absolute -bottom-4 -left-3 rounded-lg px-4 py-2 sm:-left-4"
               >
-                <div className="flex items-center space-x-2">
-                  <Award className="text-secondary" size={16} />
-                  <span className="text-sm text-white">5+ Years Exp</span>
+                <div className="flex items-center gap-2">
+                  <Award className="text-secondary-light" size={16} aria-hidden="true" />
+                  <span className="text-sm text-white">6+ Years Exp</span>
                 </div>
               </motion.div>
             </div>
@@ -113,54 +87,55 @@ const BioSection = () => {
 
           {/* Bio Text */}
           <div>
-            <motion.div variants={fadeInUp} className="space-y-6 text-gray-300">
+            <motion.div variants={fadeInUp} className="max-w-prose space-y-6 text-gray-300">
               <p className="text-lg leading-relaxed">
-                <span className="text-primary font-semibold">Hello!</span> I'm Parfait Ben-oni Tedom Tedom, 
-                a Mechatronics Engineer with a passion for building intelligent systems that 
-                make a real impact on people's lives.
+                <span className="font-semibold text-primary">Hello!</span> I&apos;m {FULL_NAME},
+                a Mechatronics Engineer with a passion for building intelligent systems that
+                make a real impact on people&apos;s lives.
               </p>
-              
+
               <p className="leading-relaxed">
-                My journey in tech started in Cameroon where I obtained my engineering degree 
-                in Mechatronics. The fusion of mechanics, electronics, and computer science 
-                fascinated me from the start. I've always been drawn to projects that combine 
+                My journey in tech started in Cameroon where I obtained my engineering degree
+                in Mechatronics. The fusion of mechanics, electronics, and computer science
+                fascinated me from the start. I&apos;ve always been drawn to projects that combine
                 hardware and software to create something truly innovative.
               </p>
 
               <p className="leading-relaxed">
-                Now based in Edmonton, Alberta, Canada, I work at the intersection of 
-                <span className="text-primary"> AI</span>, 
-                <span className="text-secondary"> full-stack development</span>, and 
-                <span className="text-accent"> robotics</span>. 
-                Whether it's building AI agents that help immigrants navigate their new home, 
-                designing IoT systems, or developing mobile applications, I bring the same 
+                Now based in Edmonton, Alberta, Canada, I work at the intersection of
+                <span className="text-primary"> AI</span>,
+                <span className="text-secondary-light"> full-stack development</span>, and
+                <span className="text-accent-light"> robotics</span>.
+                Whether it&apos;s building AI agents that help immigrants navigate their new home,
+                designing IoT systems, or developing mobile applications, I bring the same
                 level of passion and attention to detail.
               </p>
 
               <p className="leading-relaxed">
-                Through my company <span className="text-primary font-semibold">Daemon Craft Inc.</span>, 
-                I help businesses leverage cutting-edge technology to solve real-world problems.
+                Through my company{' '}
+                <a
+                  href={COMPANY_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-primary underline-offset-4 hover:underline"
+                >
+                  {COMPANY_NAME}
+                  <span className="sr-only"> (opens in a new tab)</span>
+                </a>
+                , I help businesses leverage cutting-edge technology to solve real-world problems.
               </p>
             </motion.div>
 
             {/* Quick facts */}
-            <motion.div 
-              variants={fadeInUp}
-              className="grid grid-cols-2 gap-4 mt-8"
-            >
-              {[
-                { icon: MapPin, label: 'Location', value: 'Edmonton, AB' },
-                { icon: Calendar, label: 'Experience', value: '6+ Years' },
-                { icon: BookOpen, label: 'Education', value: 'Mechatronics Eng.' },
-                { icon: Rocket, label: 'Company', value: 'Daemon Craft Inc.' },
-              ].map((fact, i) => (
-                <div key={i} className="p-4 rounded-lg bg-dark-light/50 border border-white/5">
-                  <fact.icon className="text-primary mb-2" size={20} />
-                  <p className="text-xs text-gray-500 uppercase tracking-wider">{fact.label}</p>
-                  <p className="text-white font-medium">{fact.value}</p>
+            <motion.dl variants={fadeInUp} className="mt-8 grid grid-cols-2 gap-3 sm:gap-4">
+              {quickFacts.map((fact) => (
+                <div key={fact.label} className="rounded-lg border border-white/5 bg-dark-light/50 p-4">
+                  <fact.icon className="mb-2 text-primary" size={20} aria-hidden="true" />
+                  <dt className="text-xs uppercase tracking-wider text-gray-400">{fact.label}</dt>
+                  <dd className="font-medium text-white">{fact.value}</dd>
                 </div>
               ))}
-            </motion.div>
+            </motion.dl>
           </div>
         </motion.div>
       </div>
@@ -168,58 +143,58 @@ const BioSection = () => {
   )
 }
 
+const values = [
+  {
+    icon: Code2,
+    title: 'Clean Code',
+    description: 'I believe in writing maintainable, well-documented code that stands the test of time.',
+  },
+  {
+    icon: Target,
+    title: 'Results-Driven',
+    description: 'Every project is an opportunity to deliver real value and exceed expectations.',
+  },
+  {
+    icon: Users,
+    title: 'User-Centered',
+    description: 'Technology should serve people. I design with the end user always in mind.',
+  },
+  {
+    icon: Cpu,
+    title: 'Innovation',
+    description: 'Constantly exploring new technologies to find better solutions to complex problems.',
+  },
+  {
+    icon: Heart,
+    title: 'Passion',
+    description: 'I genuinely love what I do, and it shows in every line of code I write.',
+  },
+  {
+    icon: Rocket,
+    title: 'Growth Mindset',
+    description: 'Always learning, always improving. The tech world never stops, and neither do I.',
+  },
+]
+
 // Values Section
 const ValuesSection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
 
-  const values = [
-    {
-      icon: Code2,
-      title: 'Clean Code',
-      description: 'I believe in writing maintainable, well-documented code that stands the test of time.'
-    },
-    {
-      icon: Target,
-      title: 'Results-Driven',
-      description: 'Every project is an opportunity to deliver real value and exceed expectations.'
-    },
-    {
-      icon: Users,
-      title: 'User-Centered',
-      description: 'Technology should serve people. I design with the end user always in mind.'
-    },
-    {
-      icon: Cpu,
-      title: 'Innovation',
-      description: 'Constantly exploring new technologies to find better solutions to complex problems.'
-    },
-    {
-      icon: Heart,
-      title: 'Passion',
-      description: 'I genuinely love what I do, and it shows in every line of code I write.'
-    },
-    {
-      icon: Rocket,
-      title: 'Growth Mindset',
-      description: 'Always learning, always improving. The tech world never stops, and neither do I.'
-    },
-  ]
-
   return (
-    <section ref={ref} className="py-32 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-dark-light/30 to-transparent" />
-      
+    <section ref={ref} className="relative py-20 sm:py-28" aria-labelledby="values-title">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-dark-light/30 to-transparent" aria-hidden="true" />
+
       <div className="container-custom relative">
         <motion.div
           initial="hidden"
-          animate={inView ? "visible" : "hidden"}
+          animate={inView ? 'visible' : 'hidden'}
           variants={stagger}
-          className="text-center mb-16"
+          className="mb-12 text-center sm:mb-16"
         >
           <motion.p variants={fadeInUp} className="section-tag mb-4">
             Core Values
           </motion.p>
-          <motion.h2 variants={fadeInUp} className="section-title mb-6">
+          <motion.h2 id="values-title" variants={fadeInUp} className="section-title mb-6">
             What Drives <span className="text-gradient">My Work</span>
           </motion.h2>
           <motion.p variants={fadeInUp} className="section-subtitle mx-auto">
@@ -227,125 +202,113 @@ const ValuesSection = () => {
           </motion.p>
         </motion.div>
 
-        <motion.div
+        <motion.ul
           initial="hidden"
-          animate={inView ? "visible" : "hidden"}
+          animate={inView ? 'visible' : 'hidden'}
           variants={stagger}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
+          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
         >
-          {values.map((value, index) => (
-            <motion.div
-              key={value.title}
-              variants={fadeInUp}
-              whileHover={{ y: -5 }}
-              className="card group"
-            >
-              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary/20 to-secondary/20 
-                             flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
+          {values.map((value) => (
+            <motion.li key={value.title} variants={fadeInUp} whileHover={{ y: -5 }} className="card group">
+              <div
+                className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20
+                           to-secondary/20 transition-transform group-hover:scale-110"
+                aria-hidden="true"
+              >
                 <value.icon className="text-primary" size={24} />
               </div>
-              <h3 className="font-heading text-xl font-semibold text-white mb-2">
-                {value.title}
-              </h3>
-              <p className="text-gray-400 text-sm">
-                {value.description}
-              </p>
-            </motion.div>
+              <h3 className="mb-2 font-heading text-xl font-semibold text-white">{value.title}</h3>
+              <p className="text-sm text-gray-300">{value.description}</p>
+            </motion.li>
           ))}
-        </motion.div>
+        </motion.ul>
       </div>
     </section>
   )
 }
 
+const milestones = [
+  {
+    year: '2019',
+    title: 'Engineering Degree',
+    description: 'Graduated with a Mechatronics Engineering degree from Cameroon.',
+    color: 'bg-blue-500',
+  },
+  {
+    year: '2020',
+    title: 'Started Professional Career',
+    description: 'Began working as a full-stack developer, building web and mobile applications.',
+    color: 'bg-green-500',
+  },
+  {
+    year: '2024',
+    title: 'Moved to Canada',
+    description: 'Relocated to Edmonton to pursue new opportunities and challenges.',
+    color: 'bg-purple-500',
+  },
+  {
+    year: '2025',
+    title: 'Founded Daemon Craft',
+    description: 'Launched my own company focused on AI, IoT, and intelligent solutions.',
+    color: 'bg-orange-500',
+  },
+  {
+    year: '2025',
+    title: 'Growing & Building',
+    description: 'Continuing to build innovative solutions and help businesses succeed.',
+    color: 'bg-cyan-500',
+  },
+]
+
 // Journey Timeline
 const JourneySection = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
 
-  const milestones = [
-    {
-      year: '2019',
-      title: 'Engineering Degree',
-      description: 'Graduated with a Mechatronics Engineering degree from Cameroon.',
-      color: 'bg-blue-500'
-    },
-    {
-      year: '2020',
-      title: 'Started Professional Career',
-      description: 'Began working as a full-stack developer, building web and mobile applications.',
-      color: 'bg-green-500'
-    },
-    {
-      year: '2024',
-      title: 'Moved to Canada',
-      description: 'Relocated to Edmonton to pursue new opportunities and challenges.',
-      color: 'bg-purple-500'
-    },
-    {
-      year: '2025',
-      title: 'Founded Daemon Craft',
-      description: 'Launched my own company focused on AI, IoT, and intelligent solutions.',
-      color: 'bg-orange-500'
-    },
-    {
-      year: '2025',
-      title: 'Growing & Building',
-      description: 'Continuing to build innovative solutions and help businesses succeed.',
-      color: 'bg-cyan-500'
-    },
-  ]
-
   return (
-    <section ref={ref} className="py-32">
+    <section ref={ref} className="py-20 sm:py-28" aria-labelledby="journey-title">
       <div className="container-custom">
         <motion.div
           initial="hidden"
-          animate={inView ? "visible" : "hidden"}
+          animate={inView ? 'visible' : 'hidden'}
           variants={stagger}
-          className="text-center mb-16"
+          className="mb-12 text-center sm:mb-16"
         >
           <motion.p variants={fadeInUp} className="section-tag mb-4">
             My Journey
           </motion.p>
-          <motion.h2 variants={fadeInUp} className="section-title mb-6">
+          <motion.h2 id="journey-title" variants={fadeInUp} className="section-title mb-6">
             Career <span className="text-gradient">Milestones</span>
           </motion.h2>
         </motion.div>
 
-        <motion.div
+        <motion.ol
           initial="hidden"
-          animate={inView ? "visible" : "hidden"}
+          animate={inView ? 'visible' : 'hidden'}
           variants={stagger}
-          className="relative max-w-3xl mx-auto"
+          className="relative mx-auto max-w-3xl"
         >
           {/* Timeline line */}
-          <div className="absolute left-8 top-0 bottom-0 w-px bg-gradient-to-b from-primary via-secondary to-accent" />
+          <div
+            className="absolute bottom-0 left-4 top-0 w-px bg-gradient-to-b from-primary via-secondary to-accent sm:left-8"
+            aria-hidden="true"
+          />
 
-          {milestones.map((milestone, index) => (
-            <motion.div
-              key={milestone.year}
-              variants={fadeInUp}
-              className="relative pl-20 pb-12 last:pb-0"
-            >
-              {/* Dot */}
-              <div className={`absolute left-6 w-4 h-4 rounded-full ${milestone.color} 
-                             transform -translate-x-1/2 shadow-lg`}>
-                <div className={`absolute inset-0 rounded-full ${milestone.color} animate-ping opacity-20`} />
-              </div>
+          {milestones.map((milestone) => (
+            <motion.li key={milestone.title} variants={fadeInUp} className="relative pb-8 pl-12 last:pb-0 sm:pb-12 sm:pl-20">
+              {/* Dot, centred on the line */}
+              <span
+                className={`absolute left-4 top-7 h-4 w-4 -translate-x-1/2 rounded-full sm:left-8 ${milestone.color} shadow-lg`}
+                aria-hidden="true"
+              />
 
-              {/* Content */}
               <div className="card">
-                <span className="text-primary font-mono text-sm">{milestone.year}</span>
-                <h3 className="font-heading text-xl font-semibold text-white mt-1 mb-2">
-                  {milestone.title}
-                </h3>
-                <p className="text-gray-400 text-sm">
-                  {milestone.description}
-                </p>
+                <span className="font-mono text-sm text-primary">{milestone.year}</span>
+                <h3 className="mb-2 mt-1 font-heading text-lg font-semibold text-white sm:text-xl">{milestone.title}</h3>
+                <p className="text-sm text-gray-300">{milestone.description}</p>
               </div>
-            </motion.div>
+            </motion.li>
           ))}
-        </motion.div>
+        </motion.ol>
       </div>
     </section>
   )
@@ -353,13 +316,19 @@ const JourneySection = () => {
 
 // Main About Component
 const About = () => {
+  usePageMeta({
+    title: 'About',
+    description: `${FULL_NAME} — Mechatronics Engineer based in Edmonton, Canada, building intelligent systems across AI, full-stack development and robotics.`,
+  })
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
-      <HeroSection />
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+      <PageHero
+        tag="About Me"
+        title="The Story"
+        highlight="Behind The Code"
+        subtitle="From Cameroon to Canada, a journey driven by passion for technology and the dream of building intelligent systems."
+      />
       <BioSection />
       <ValuesSection />
       <JourneySection />

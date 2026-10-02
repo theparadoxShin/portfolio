@@ -1,186 +1,171 @@
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link } from 'react-router-dom'
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { motion, useReducedMotion } from 'framer-motion'
 import { useInView } from 'react-intersection-observer'
-import { 
+import {
   ArrowRight, ChevronDown, Download, Mail,
-  Code2, Cpu, Bot, Cog, Cloud, Layers,
-  Github, Linkedin, ExternalLink, Smartphone
+  Code2, Cpu, Bot, Cog, Cloud,
+  Github, Linkedin, ExternalLink, Smartphone,
 } from 'lucide-react'
-import SkillsRadar from '../components/SkillsRadar'
+import SkillsRadar, { DEFAULT_RADAR, toRadarData } from '../components/SkillsRadar'
 import CodeTag, { SectionTag } from '../components/CodeTag'
-import { useProjects } from '../hooks/useApi'
-import photoBen from '../assets/photo-ben.png'
+import { CardSkeletonGrid, ErrorState } from '../components/DataState'
+import { useProjects, useSkillsRadar } from '../hooks/useApi'
+import { usePageMeta } from '../hooks/usePageMeta'
+import { getPrimaryImage, getProjectCategory, projectPath, asArray } from '../lib/content'
+import {
+  COMPANY_URL, EMAIL, GITHUB, LINKEDIN, RESUME_URL, SHORT_NAME,
+} from '../data/profile'
+import photoBen from '../assets/photo-ben.webp'
 
 // Animation variants
 const fadeInUp = {
   hidden: { opacity: 0, y: 40 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } }
+  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: 'easeOut' } },
 }
 
 const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } }
+  visible: { transition: { staggerChildren: 0.1 } },
 }
+
+const TITLES = ['Full Stack Engineer', 'AI/ML Developer', 'Robotics Engineer', 'IoT Specialist']
+
+/** Types, holds, deletes, moves to the next word. Static rotation when motion is reduced. */
+const useTypewriter = (words, { typeMs = 90, deleteMs = 45, holdMs = 1800 } = {}) => {
+  const reduce = useReducedMotion()
+  const [index, setIndex] = useState(0)
+  const [text, setText] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    if (reduce) {
+      const timer = setInterval(() => setIndex((i) => (i + 1) % words.length), 3500)
+      return () => clearInterval(timer)
+    }
+    const word = words[index]
+    let timer
+    if (!deleting && text === word) {
+      timer = setTimeout(() => setDeleting(true), holdMs)
+    } else if (deleting && text === '') {
+      setDeleting(false)
+      setIndex((i) => (i + 1) % words.length)
+    } else {
+      timer = setTimeout(
+        () => setText(deleting ? word.slice(0, text.length - 1) : word.slice(0, text.length + 1)),
+        deleting ? deleteMs : typeMs,
+      )
+    }
+    return () => clearTimeout(timer)
+  }, [text, deleting, index, reduce, words, typeMs, deleteMs, holdMs])
+
+  return reduce ? words[index] : text
+}
+
+const heroSocials = [
+  { href: GITHUB.url, label: 'GitHub', icon: Github, external: true },
+  { href: LINKEDIN.url, label: 'LinkedIn', icon: Linkedin, external: true },
+  { href: `mailto:${EMAIL}`, label: 'Email', icon: Mail, external: false },
+]
+
+const badges = [
+  { label: 'Web/Mobile', icon: Smartphone, color: 'text-green-400', pos: '-top-3 -left-3 sm:-top-4 sm:-left-4', y: [0, 8, 0], d: 3.5 },
+  { label: 'AI/ML', icon: Bot, color: 'text-primary', pos: '-top-3 -right-3 sm:-top-4 sm:-right-4', y: [0, -8, 0], d: 3 },
+  { label: 'Robotics', icon: Cog, color: 'text-secondary-light', pos: '-bottom-3 -left-3 sm:-bottom-4 sm:-left-4', y: [0, 10, 0], d: 4 },
+  { label: 'Cloud', icon: Cloud, color: 'text-cyan-400', pos: '-bottom-3 -right-3 sm:-bottom-4 sm:-right-4', y: [0, -10, 0], d: 3.2 },
+]
 
 // Hero Section
 const HeroSection = () => {
-  const [typedText, setTypedText] = useState('')
-  const titles = ['Full Stack Engineer', 'AI/ML Developer', 'Robotics Engineer', 'IoT Specialist']
-  const [titleIndex, setTitleIndex] = useState(0)
-  
-  useEffect(() => {
-    const currentTitle = titles[titleIndex]
-    let charIndex = 0
-    let isDeleting = false
-    
-    const typeInterval = setInterval(() => {
-      if (!isDeleting) {
-        if (charIndex <= currentTitle.length) {
-          setTypedText(currentTitle.slice(0, charIndex))
-          charIndex++
-        } else {
-          setTimeout(() => {
-            isDeleting = true
-          }, 2000)
-        }
-      } else {
-        if (charIndex > 0) {
-          charIndex--
-          setTypedText(currentTitle.slice(0, charIndex))
-        } else {
-          isDeleting = false
-          setTitleIndex((prev) => (prev + 1) % titles.length)
-        }
-      }
-    }, isDeleting ? 50 : 100)
-
-    return () => clearInterval(typeInterval)
-  }, [titleIndex])
+  const typedText = useTypewriter(TITLES)
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center overflow-hidden pt-20">
+    <section className="relative flex min-h-[100svh] items-center justify-center overflow-hidden pb-20 pt-28 lg:pb-16">
       {/* Animated gradient backgrounds */}
       <motion.div
-        animate={{ 
-          scale: [1, 1.2, 1],
-          opacity: [0.2, 0.3, 0.2],
-          x: [0, 30, 0],
-        }}
+        animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.3, 0.2], x: [0, 30, 0] }}
         transition={{ duration: 15, repeat: Infinity }}
-        className="absolute top-1/4 left-1/4 w-[600px] h-[600px] bg-primary/10 rounded-full blur-[150px]"
+        className="pointer-events-none absolute left-1/4 top-1/4 h-[320px] w-[320px] rounded-full bg-primary/10 blur-[120px] sm:h-[600px] sm:w-[600px] sm:blur-[150px]"
+        aria-hidden="true"
       />
       <motion.div
-        animate={{ 
-          scale: [1.2, 1, 1.2],
-          opacity: [0.15, 0.25, 0.15],
-          x: [0, -30, 0],
-        }}
+        animate={{ scale: [1.2, 1, 1.2], opacity: [0.15, 0.25, 0.15], x: [0, -30, 0] }}
         transition={{ duration: 18, repeat: Infinity }}
-        className="absolute bottom-1/4 right-1/4 w-[600px] h-[600px] bg-secondary/10 rounded-full blur-[150px]"
+        className="pointer-events-none absolute bottom-1/4 right-1/4 h-[320px] w-[320px] rounded-full bg-secondary/10 blur-[120px] sm:h-[600px] sm:w-[600px] sm:blur-[150px]"
+        aria-hidden="true"
       />
 
       <div className="container-custom relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
+        <div className="grid items-center gap-14 lg:grid-cols-2 lg:gap-12">
           {/* Text Content */}
-          <motion.div
-            initial="hidden"
-            animate="visible"
-            variants={stagger}
-            className="text-center lg:text-left"
-          >
-            {/* Greeting */}
-            <motion.div 
-              variants={fadeInUp}
-              className="mb-4"
-            >
+          <motion.div initial="hidden" animate="visible" variants={stagger} className="text-center lg:text-left">
+            <motion.div variants={fadeInUp} className="mb-4">
               <CodeTag language="python" size="sm">
                 Hello World
               </CodeTag>
             </motion.div>
 
-            {/* Name */}
-            <motion.h1 
+            <motion.h1
               variants={fadeInUp}
-              className="font-display text-5xl md:text-6xl lg:text-7xl font-bold mb-4"
+              className="mb-4 text-balance font-display text-4xl font-bold leading-tight sm:text-5xl md:text-6xl xl:text-7xl"
             >
-              <span className="text-white">I'm </span>
-              <span className="text-gradient">Parfait Tedom Tedom</span>
+              <span className="text-white">I&apos;m </span>
+              <span className="text-gradient">{SHORT_NAME}</span>
             </motion.h1>
 
-            {/* Dynamic title */}
-            <motion.div 
-              variants={fadeInUp}
-              className="h-16 mb-6"
-            >
-              <h2 className="font-heading text-2xl md:text-3xl text-gray-300">
-                <span className="text-primary">{typedText}</span>
-                <span className="animate-blink border-r-2 border-primary ml-1">&nbsp;</span>
-              </h2>
+            {/* Dynamic title (fixed height: no layout shift while typing) */}
+            <motion.div variants={fadeInUp} className="mb-6 flex min-h-[2.5rem] items-center justify-center md:min-h-[3rem] lg:justify-start">
+              <p className="font-heading text-xl text-gray-300 sm:text-2xl md:text-3xl">
+                <span className="sr-only">{TITLES.join(', ')}</span>
+                <span aria-hidden="true">
+                  <span className="text-primary">{typedText}</span>
+                  <span className="ml-1 animate-blink border-r-2 border-primary">&nbsp;</span>
+                </span>
+              </p>
             </motion.div>
 
-            {/* Description */}
-            <motion.p 
+            <motion.p
               variants={fadeInUp}
-              className="text-lg text-gray-400 max-w-xl mb-8 leading-relaxed"
+              className="mx-auto mb-8 max-w-xl text-pretty text-base leading-relaxed text-gray-300 sm:text-lg lg:mx-0"
             >
-              Mechatronics Engineer passionate about building intelligent systems 
+              Mechatronics Engineer passionate about building intelligent systems
               that bridge the gap between software, hardware, and AI. Based in Edmonton, Alberta, Canada.
             </motion.p>
 
             {/* CTA Buttons */}
-            <motion.div 
+            <motion.div
               variants={fadeInUp}
-              className="flex flex-col sm:flex-row items-center gap-4 justify-center lg:justify-start"
+              className="mx-auto flex max-w-sm flex-col items-stretch justify-center gap-4 sm:max-w-none sm:flex-row sm:items-center lg:justify-start"
             >
               <Link to="/contact" className="btn-primary group">
                 <span className="flex items-center">
-                  Let's Connect
-                  <ArrowRight className="ml-2 group-hover:translate-x-1 transition-transform" size={18} />
+                  Let&apos;s Connect
+                  <ArrowRight className="ml-2 transition-transform group-hover:translate-x-1" size={18} aria-hidden="true" />
                 </span>
               </Link>
-              <a 
-                href="/resume.pdf" 
-                download
-                className="btn-outline"
-              >
-                <span className="flex items-center">
-                  <Download size={18} className="mr-2" />
-                  Download CV
-                </span>
+              <a href={RESUME_URL} download className="btn-outline">
+                <Download size={18} className="mr-2" aria-hidden="true" />
+                Download CV
+                <span className="sr-only"> (PDF)</span>
               </a>
             </motion.div>
 
             {/* Social Links */}
-            <motion.div 
-              variants={fadeInUp}
-              className="flex items-center gap-4 mt-8 justify-center lg:justify-start"
-            >
-              <a 
-                href="https://github.com/parfaittedomtedom" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg border border-white/10 flex items-center justify-center
-                           text-gray-400 hover:text-primary hover:border-primary/50 transition-all duration-300"
-              >
-                <Github size={18} />
-              </a>
-              <a 
-                href="https://linkedin.com/in/parfaittedomtedom" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="w-10 h-10 rounded-lg border border-white/10 flex items-center justify-center
-                           text-gray-400 hover:text-primary hover:border-primary/50 transition-all duration-300"
-              >
-                <Linkedin size={18} />
-              </a>
-              <a 
-                href="mailto:contact@daemoncraft.ca"
-                className="w-10 h-10 rounded-lg border border-white/10 flex items-center justify-center
-                           text-gray-400 hover:text-primary hover:border-primary/50 transition-all duration-300"
-              >
-                <Mail size={18} />
-              </a>
-            </motion.div>
+            <motion.ul variants={fadeInUp} className="mt-8 flex items-center justify-center gap-3 lg:justify-start">
+              {heroSocials.map((social) => (
+                <li key={social.label}>
+                  <a
+                    href={social.href}
+                    target={social.external ? '_blank' : undefined}
+                    rel={social.external ? 'noopener noreferrer' : undefined}
+                    aria-label={social.external ? `${social.label} (opens in a new tab)` : social.label}
+                    className="flex h-11 w-11 items-center justify-center rounded-lg border border-white/10 text-gray-300
+                               transition-all duration-300 hover:border-primary/50 hover:text-primary"
+                  >
+                    <social.icon size={18} aria-hidden="true" />
+                  </a>
+                </li>
+              ))}
+            </motion.ul>
           </motion.div>
 
           {/* Photo/Visual */}
@@ -191,88 +176,138 @@ const HeroSection = () => {
             className="relative flex justify-center"
           >
             {/* Decorative rings */}
-            <div className="absolute inset-0 flex items-center justify-center">
+            <div className="pointer-events-none absolute inset-0 flex items-center justify-center" aria-hidden="true">
               <motion.div
                 animate={{ rotate: 360 }}
                 transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-                className="w-80 h-80 border border-primary/20 rounded-full"
+                className="h-72 w-72 rounded-full border border-primary/20 sm:h-80 sm:w-80"
               />
               <motion.div
                 animate={{ rotate: -360 }}
                 transition={{ duration: 25, repeat: Infinity, ease: 'linear' }}
-                className="absolute w-96 h-96 border border-secondary/10 rounded-full border-dashed"
+                className="absolute h-[19rem] w-[19rem] rounded-full border border-dashed border-secondary/10 sm:h-96 sm:w-96"
               />
             </div>
 
             {/* Photo container */}
             <div className="relative z-10">
-              <div className="w-72 h-72 md:w-80 md:h-80 rounded-full overflow-hidden 
-                              border-4 border-primary/30 shadow-glow-lg">
-                <img 
-                  src={photoBen} 
-                  alt="Parfait Tedom Tedom" 
-                  className="w-full h-full object-cover"
+              <div className="h-60 w-60 overflow-hidden rounded-full border-4 border-primary/30 shadow-glow-lg sm:h-72 sm:w-72 md:h-80 md:w-80">
+                <img
+                  src={photoBen}
+                  alt={`Portrait of ${SHORT_NAME}`}
+                  width="600"
+                  height="800"
+                  decoding="async"
+                  className="h-full w-full object-cover object-top"
                 />
               </div>
-              
-              {/* Floating badges - 4 corners */}
-              <motion.div
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 3, repeat: Infinity }}
-                className="absolute -top-4 -right-4 px-3 py-1.5 rounded-lg glass
-                           flex items-center space-x-2"
-              >
-                <Bot className="text-primary" size={16} />
-                <span className="text-xs text-white font-medium">AI/ML</span>
-              </motion.div>
-              
-              <motion.div
-                animate={{ y: [0, 8, 0] }}
-                transition={{ duration: 3.5, repeat: Infinity }}
-                className="absolute -top-4 -left-4 px-3 py-1.5 rounded-lg glass
-                           flex items-center space-x-2"
-              >
-                <Smartphone className="text-green-400" size={16} />
-                <span className="text-xs text-white font-medium">Web/Mobile</span>
-              </motion.div>
-              
-              <motion.div
-                animate={{ y: [0, 10, 0] }}
-                transition={{ duration: 4, repeat: Infinity }}
-                className="absolute -bottom-4 -left-4 px-3 py-1.5 rounded-lg glass
-                           flex items-center space-x-2"
-              >
-                <Cog className="text-secondary" size={16} />
-                <span className="text-xs text-white font-medium">Robotics</span>
-              </motion.div>
-              
-              <motion.div
-                animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 3.2, repeat: Infinity }}
-                className="absolute -bottom-4 -right-4 px-3 py-1.5 rounded-lg glass
-                           flex items-center space-x-2"
-              >
-                <Cloud className="text-cyan-400" size={16} />
-                <span className="text-xs text-white font-medium">Cloud</span>
-              </motion.div>
+
+              {/* Floating badges */}
+              {badges.map((badge) => (
+                <motion.div
+                  key={badge.label}
+                  animate={{ y: badge.y }}
+                  transition={{ duration: badge.d, repeat: Infinity }}
+                  className={`glass absolute ${badge.pos} flex items-center gap-2 rounded-lg px-3 py-1.5`}
+                >
+                  <badge.icon className={badge.color} size={16} aria-hidden="true" />
+                  <span className="text-xs font-medium text-white">{badge.label}</span>
+                </motion.div>
+              ))}
             </div>
           </motion.div>
         </div>
+      </div>
 
-        {/* Scroll indicator */}
+      {/* Scroll indicator */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.5 }}
+        className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 lg:block"
+        aria-hidden="true"
+      >
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.5 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+          className="flex flex-col items-center text-gray-400"
         >
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="flex flex-col items-center text-gray-500"
-          >
-            <span className="text-xs uppercase tracking-wider mb-2">Scroll</span>
-            <ChevronDown size={20} />
+          <span className="mb-2 text-xs uppercase tracking-wider">Scroll</span>
+          <ChevronDown size={20} />
+        </motion.div>
+      </motion.div>
+    </section>
+  )
+}
+
+const expertiseItems = [
+  { icon: Code2, text: 'Full-Stack Web & Mobile Development' },
+  { icon: Bot, text: 'AI Agents & Machine Learning Models' },
+  { icon: Cpu, text: 'IoT Systems & Embedded Solutions' },
+  { icon: Cog, text: 'Robotics & Mechatronic Design' },
+  { icon: Cloud, text: 'Cloud Architecture & DevOps' },
+]
+
+// Skills Preview Section
+const SkillsPreview = () => {
+  const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
+  const { radar, loading, error } = useSkillsRadar()
+
+  const radarData = useMemo(() => {
+    const data = toRadarData(radar)
+    return data.length >= 3 ? data : DEFAULT_RADAR
+  }, [radar])
+
+  return (
+    <section ref={ref} className="relative py-20 sm:py-28" aria-labelledby="home-skills-title">
+      <div className="container-custom">
+        <motion.div
+          initial="hidden"
+          animate={inView ? 'visible' : 'hidden'}
+          variants={stagger}
+          className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16"
+        >
+          <div>
+            <motion.div variants={fadeInUp} className="mb-4">
+              <SectionTag>Technical Expertise</SectionTag>
+            </motion.div>
+            <motion.h2 id="home-skills-title" variants={fadeInUp} className="section-title mb-6">
+              Full Stack <span className="text-gradient">Engineer</span>
+            </motion.h2>
+            <motion.p variants={fadeInUp} className="section-subtitle mb-8">
+              A unique blend of software engineering, AI/ML expertise, and hardware
+              knowledge. From web apps to autonomous robots, I bring ideas to life.
+            </motion.p>
+
+            <motion.ul variants={fadeInUp} className="mb-8 space-y-4">
+              {expertiseItems.map((item) => (
+                <li key={item.text} className="flex items-center gap-3 text-gray-200">
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10" aria-hidden="true">
+                    <item.icon className="text-primary" size={16} />
+                  </span>
+                  <span>{item.text}</span>
+                </li>
+              ))}
+            </motion.ul>
+
+            <motion.div variants={fadeInUp}>
+              <Link to="/skills" className="btn-outline">
+                <span>View All Skills</span>
+                <ArrowRight className="ml-2" size={18} aria-hidden="true" />
+              </Link>
+            </motion.div>
+          </div>
+
+          {/* Radar Chart */}
+          <motion.div variants={fadeInUp} className="flex justify-center">
+            {loading && !error ? (
+              <div className="flex aspect-square w-full max-w-[440px] items-center justify-center" role="status">
+                <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/25 border-t-primary" aria-hidden="true" />
+                <span className="sr-only">Loading skills chart…</span>
+              </div>
+            ) : (
+              <SkillsRadar data={radarData} maxSize={440} />
+            )}
           </motion.div>
         </motion.div>
       </div>
@@ -280,119 +315,85 @@ const HeroSection = () => {
   )
 }
 
-// Skills Preview Section
-const SkillsPreview = () => {
-  const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
-
-  const skills = {
-    frontend: 85,
-    backend: 90,
-    ai: 88,
-    iot: 82,
-    robotics: 75,
-    cad: 70,
-    cloud: 85,
-    embedded: 78,
-  }
+const FeaturedProjectCard = ({ project }) => {
+  const image = getPrimaryImage(project)
+  const category = getProjectCategory(project.category)
+  const technologies = asArray(project.technologies)
 
   return (
-    <section ref={ref} className="py-32 relative">
-      <div className="container-custom">
-        <motion.div
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={stagger}
-          className="grid lg:grid-cols-2 gap-16 items-center"
+    <motion.li variants={fadeInUp} whileHover={{ y: -6 }} className="card-glow group h-full rounded-xl">
+      <Link to={projectPath(project)} className="card flex h-full flex-col">
+        <div
+          className={`mb-6 flex h-48 items-center justify-center overflow-hidden rounded-lg ${
+            image ? 'bg-dark' : `bg-gradient-to-br ${category.gradient}`
+          }`}
         >
-          {/* Text */}
-          <div>
-            <motion.div variants={fadeInUp} className="mb-4">
-              <SectionTag>Technical Expertise</SectionTag>
-            </motion.div>
-            <motion.h2 variants={fadeInUp} className="section-title mb-6">
-              Full Stack <span className="text-gradient">Engineer</span>
-            </motion.h2>
-            <motion.p variants={fadeInUp} className="section-subtitle mb-8">
-              A unique blend of software engineering, AI/ML expertise, and hardware 
-              knowledge. From web apps to autonomous robots, I bring ideas to life.
-            </motion.p>
+          {image ? (
+            <img
+              src={image.url}
+              alt={image.alt || ''}
+              width="640"
+              height="384"
+              loading="lazy"
+              decoding="async"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            />
+          ) : (
+            <category.icon className="text-white/40" size={56} aria-hidden="true" />
+          )}
+        </div>
 
-            <motion.div variants={fadeInUp} className="space-y-4 mb-8">
-              {[
-                { icon: Code2, text: 'Full-Stack Web & Mobile Development' },
-                { icon: Bot, text: 'AI Agents & Machine Learning Models' },
-                { icon: Cpu, text: 'IoT Systems & Embedded Solutions' },
-                { icon: Cog, text: 'Robotics & Mechatronic Design' },
-                { icon: Cloud, text: 'Cloud Architecture & DevOps' },
-              ].map((item, i) => (
-                <motion.div 
-                  key={i}
-                  variants={fadeInUp}
-                  className="flex items-center space-x-3 text-gray-300"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <item.icon className="text-primary" size={16} />
-                  </div>
-                  <span>{item.text}</span>
-                </motion.div>
-              ))}
-            </motion.div>
+        <h3 className="mb-3 font-heading text-xl font-semibold text-white transition-colors group-hover:text-primary">
+          {project.title}
+        </h3>
+        {(project.shortDescription || project.description) && (
+          <p className="mb-4 line-clamp-3 flex-1 text-sm text-gray-300">
+            {project.shortDescription || project.description}
+          </p>
+        )}
 
-            <motion.div variants={fadeInUp}>
-              <Link to="/skills" className="btn-outline inline-flex items-center">
-                <span>View All Skills</span>
-                <ArrowRight className="ml-2" size={18} />
-              </Link>
-            </motion.div>
-          </div>
-
-          {/* Radar Chart */}
-          <motion.div
-            variants={fadeInUp}
-            className="flex justify-center"
-          >
-            <SkillsRadar skills={skills} size={400} animated={inView} />
-          </motion.div>
-        </motion.div>
-      </div>
-    </section>
+        {technologies.length > 0 && (
+          <ul className="mt-auto flex flex-wrap gap-2" aria-label="Technologies">
+            {technologies.slice(0, 4).map((tag) => (
+              <li key={tag} className="rounded-full bg-primary/10 px-2.5 py-1 text-xs text-primary">
+                {tag}
+              </li>
+            ))}
+          </ul>
+        )}
+      </Link>
+    </motion.li>
   )
 }
 
 // Featured Projects Section
 const FeaturedProjects = () => {
   const [ref, inView] = useInView({ threshold: 0.1, triggerOnce: true })
-  const { projects: apiProjects, loading } = useProjects('portfolio')
-  
-  // Get featured projects from API (first 3 projects marked as featured or just first 3)
-  const featuredProjects = useMemo(() => {
-    if (!apiProjects || apiProjects.length === 0) return []
-    const featured = apiProjects.filter(p => p.isFeatured)
-    return (featured.length > 0 ? featured : apiProjects).slice(0, 3).map(project => ({
-      ...project,
-      link: `/projects/${project.slug || project._id}`,
-      color: project.color || 'from-primary to-accent'
-    }))
-  }, [apiProjects])
+  const { projects, loading, error, retry } = useProjects()
 
-  // Don't render if no projects
-  if (!loading && featuredProjects.length === 0) return null
+  const featuredProjects = useMemo(() => {
+    const featured = projects.filter((p) => p.featured)
+    return (featured.length > 0 ? featured : projects).slice(0, 3)
+  }, [projects])
+
+  // Nothing published yet: keep the home page clean.
+  if (!loading && !error && featuredProjects.length === 0) return null
 
   return (
-    <section ref={ref} className="py-32 relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-dark-light/30 to-transparent" />
-      
+    <section ref={ref} className="relative py-20 sm:py-28" aria-labelledby="home-projects-title">
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-dark-light/30 to-transparent" aria-hidden="true" />
+
       <div className="container-custom relative">
         <motion.div
           initial="hidden"
-          animate={inView ? "visible" : "hidden"}
+          animate={inView ? 'visible' : 'hidden'}
           variants={stagger}
-          className="text-center mb-16"
+          className="mb-12 text-center sm:mb-16"
         >
           <motion.div variants={fadeInUp} className="mb-4">
             <SectionTag>Portfolio</SectionTag>
           </motion.div>
-          <motion.h2 variants={fadeInUp} className="section-title mb-6">
+          <motion.h2 id="home-projects-title" variants={fadeInUp} className="section-title mb-6">
             Featured <span className="text-gradient">Projects</span>
           </motion.h2>
           <motion.p variants={fadeInUp} className="section-subtitle mx-auto">
@@ -400,66 +401,31 @@ const FeaturedProjects = () => {
           </motion.p>
         </motion.div>
 
-        <motion.div
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={stagger}
-          className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-        >
-          {featuredProjects.map((project, index) => (
-            <motion.div
-              key={project._id || project.title}
-              variants={fadeInUp}
-              whileHover={{ y: -10 }}
-              className="card-glow group cursor-pointer"
-            >
-              <Link to={project.link}>
-                <div className="card h-full">
-                  {/* Image placeholder */}
-                  <div className={`h-48 rounded-lg mb-6 bg-gradient-to-br ${project.color} 
-                                  flex items-center justify-center overflow-hidden`}>
-                    {project.thumbnail ? (
-                      <img src={project.thumbnail} alt={project.title} className="w-full h-full object-cover" />
-                    ) : (
-                      <Layers className="text-white/30" size={64} />
-                    )}
-                  </div>
-                  
-                  <h3 className="font-heading text-xl font-semibold text-white mb-3 
-                                group-hover:text-primary transition-colors">
-                    {project.title}
-                  </h3>
-                  <p className="text-gray-400 text-sm mb-4">
-                    {project.shortDescription || project.description}
-                  </p>
-                  
-                  <div className="flex flex-wrap gap-2">
-                    {(project.technologies || []).slice(0, 4).map((tag) => (
-                      <span 
-                        key={tag}
-                        className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary"
-                      >
-                        {tag}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </motion.div>
+        {loading && <CardSkeletonGrid count={3} withMedia label="Loading featured projects…" cardClassName="h-[26rem]" />}
 
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={inView ? { opacity: 1 } : {}}
-          transition={{ delay: 0.6 }}
-          className="text-center mt-12"
-        >
-          <Link to="/projects" className="btn-outline inline-flex items-center">
+        {!loading && error && (
+          <ErrorState compact title="Projects could not be loaded" message={error} onRetry={retry} />
+        )}
+
+        {!loading && !error && (
+          <motion.ul
+            initial="hidden"
+            animate={inView ? 'visible' : 'hidden'}
+            variants={stagger}
+            className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 lg:gap-8"
+          >
+            {featuredProjects.map((project) => (
+              <FeaturedProjectCard key={project.id || project.slug || project.title} project={project} />
+            ))}
+          </motion.ul>
+        )}
+
+        <div className="mt-12 text-center">
+          <Link to="/projects" className="btn-outline">
             <span>View All Projects</span>
-            <ArrowRight className="ml-2" size={18} />
+            <ArrowRight className="ml-2" size={18} aria-hidden="true" />
           </Link>
-        </motion.div>
+        </div>
       </div>
     </section>
   )
@@ -470,52 +436,43 @@ const CTASection = () => {
   const [ref, inView] = useInView({ threshold: 0.3, triggerOnce: true })
 
   return (
-    <section ref={ref} className="py-32 relative overflow-hidden">
-      <div className="absolute inset-0">
+    <section ref={ref} className="relative overflow-hidden py-20 sm:py-28" aria-labelledby="home-cta-title">
+      <div className="absolute inset-0" aria-hidden="true">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/5 via-secondary/5 to-primary/5" />
         <div className="absolute inset-0 grid-bg opacity-50" />
       </div>
 
-      <div className="container-custom text-center relative z-10">
-        <motion.div
-          initial="hidden"
-          animate={inView ? "visible" : "hidden"}
-          variants={stagger}
-        >
-          <motion.h2 
+      <div className="container-custom relative z-10 text-center">
+        <motion.div initial="hidden" animate={inView ? 'visible' : 'hidden'} variants={stagger}>
+          <motion.h2
+            id="home-cta-title"
             variants={fadeInUp}
-            className="font-display text-4xl md:text-5xl font-bold tracking-tight mb-6"
+            className="mb-6 text-balance font-display text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl"
           >
-            <span className="text-white">Let's Build Something</span>
+            <span className="text-white">Let&apos;s Build Something</span>
             <br />
             <span className="text-gradient">Amazing Together</span>
           </motion.h2>
-          
-          <motion.p 
-            variants={fadeInUp}
-            className="text-xl text-gray-400 mb-10 max-w-2xl mx-auto"
-          >
-            Whether it's an AI project, a web application, or a robotics challenge, 
-            I'm ready to bring your vision to life.
+
+          <motion.p variants={fadeInUp} className="mx-auto mb-10 max-w-2xl text-pretty text-lg text-gray-300 sm:text-xl">
+            Whether it&apos;s an AI project, a web application, or a robotics challenge,
+            I&apos;m ready to bring your vision to life.
           </motion.p>
 
-          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row items-center justify-center gap-4">
-            <Link to="/contact" className="btn-primary text-lg px-10 py-4">
-              <span className="flex items-center">
+          <motion.div
+            variants={fadeInUp}
+            className="mx-auto flex max-w-sm flex-col items-stretch justify-center gap-4 sm:max-w-none sm:flex-row sm:items-center"
+          >
+            <Link to="/contact" className="btn-primary px-8 py-4 text-lg sm:px-10">
+              <span className="flex items-center justify-center">
                 Start a Conversation
-                <ArrowRight className="ml-3" size={20} />
+                <ArrowRight className="ml-3" size={20} aria-hidden="true" />
               </span>
             </Link>
-            <a 
-              href="https://daemoncraft.ca" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="btn-outline"
-            >
-              <span className="flex items-center">
-                Visit Daemon Craft
-                <ExternalLink className="ml-2" size={18} />
-              </span>
+            <a href={COMPANY_URL} target="_blank" rel="noopener noreferrer" className="btn-outline">
+              Visit Daemon Craft
+              <ExternalLink className="ml-2" size={18} aria-hidden="true" />
+              <span className="sr-only"> (opens in a new tab)</span>
             </a>
           </motion.div>
         </motion.div>
@@ -527,6 +484,7 @@ const CTASection = () => {
         animate={inView ? { scaleX: 1 } : {}}
         transition={{ duration: 1, ease: 'easeOut' }}
         className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary/50 to-transparent"
+        aria-hidden="true"
       />
     </section>
   )
@@ -534,12 +492,10 @@ const CTASection = () => {
 
 // Main Home Component
 const Home = () => {
+  usePageMeta()
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-    >
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <HeroSection />
       <SkillsPreview />
       <FeaturedProjects />

@@ -67,15 +67,20 @@ const CodeTag = ({
     md: 'text-base',
   }
 
+  // Screen readers get the plain label, not the code syntax around it.
   const content = (
-    <code className={`font-mono ${style.color} ${sizeClasses[size]} tracking-wider ${className}`}>
-      {style.format(text)}
-    </code>
+    <>
+      <span className="sr-only">{text}</span>
+      <code aria-hidden="true" className={`font-mono ${style.color} ${sizeClasses[size]} tracking-wider break-words ${className}`}>
+        {style.format(text)}
+      </code>
+    </>
   )
 
   if (animate) {
     return (
       <motion.span
+        className="inline-block max-w-full"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
@@ -91,7 +96,7 @@ const CodeTag = ({
 // Section tag variant with consistent styling
 export const SectionTag = ({ children, className = '' }) => {
   return (
-    <div className={`inline-block px-4 py-2 rounded-lg bg-dark-light/50 border border-white/10 ${className}`}>
+    <div className={`inline-block max-w-full px-4 py-2 rounded-lg bg-dark-light/50 border border-white/10 ${className}`}>
       <CodeTag size="sm" animate={false}>
         {children}
       </CodeTag>

@@ -1,0 +1,60 @@
+name: CI/CD
+
+# Pull requests: install, build.
+# Push to main: same checks, then publish to S3 + CloudFront (scripts/deploy.sh).
+# AWS access goes through OIDC (role daemon-craft-github-site-portfolio): no AWS keys on GitHub.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+  deploy:
+    name: Publish https://parfaittedomtedom.com
+    needs: build
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    concurrency:
+      group: deploy-site-portfolio
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - uses: aws-actions/configure-aws-credentials@v6
+        with:
+          role-to-assume: arn:aws:iam::685497515185:role/daemon-craft-github-site-portfolio
+          aws-region: ca-central-1
+      # Builds with the API URL read from CloudFormation, uploads, invalidates CloudFront.
+      - name: Publish
+        run: bash scripts/deploy.sh
+        env:
+          # Public reCAPTCHA v3 site key (repository variable, not a secret).
+          VITE_RECAPTCHA_SITE_KEY: ${{ vars.VITE_RECAPTCHA_SITE_KEY }}
