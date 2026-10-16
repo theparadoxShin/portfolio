@@ -2,7 +2,7 @@
 import { Github, Linkedin, Twitter, Mail } from 'lucide-react';
 
 export const SITE_URL = 'https://parfaittedomtedom.com';
-export const COMPANY_URL = 'https://daemon-craft.ca';
+export const COMPANY_URL = 'https://daemon-craft.com';
 export const COMPANY_NAME = 'Daemon Craft Inc.';
 
 export const FULL_NAME = 'Parfait Ben-oni Tedom Tedom';

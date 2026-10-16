@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
         siteUrl: 'https://parfaittedomtedom.com',
         site: 'portfolio',
         name: 'Parfait Ben-oni Tedom Tedom',
-        intro: 'Full-stack engineer and mechatronics engineer building intelligent systems that bridge software, hardware and AI. Founder of Daemon Craft (https://daemon-craft.ca). Based in Edmonton, Alberta, Canada.',
+        intro: 'Full-stack engineer and mechatronics engineer building intelligent systems that bridge software, hardware and AI. Founder of Daemon Craft (https://daemon-craft.com). Based in Edmonton, Alberta, Canada.',
         email: 'me@parfaittedomtedom.com',
         colors: { text: '#f3f4f6', background: '#0A0F1C', link: '#00D9FF' },
         creator: { '@type': 'Person', name: 'Parfait Ben-oni Tedom Tedom', url: 'https://parfaittedomtedom.com/' },
